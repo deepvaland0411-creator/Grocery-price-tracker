@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price Updates - GroceryTracker Admin</title>
+  <meta name="description" content="Manage product prices across stores in GroceryTracker admin panel.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #22c55e;
+      --primary-dark: #16a34a;
+      --primary-light: #dcfce7;
+      --background: #f0fdf4;
+      --foreground: #14532d;
+      --card: #ffffff;
+      --card-foreground: #14532d;
+      --muted: #f0fdf4;
+      --muted-foreground: #4b5563;
+      --border: #d1fae5;
+      --radius: 0.75rem;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --sidebar-width: 260px;
+      --sidebar-width-collapsed: 70px;
+    }
+
+    html.dark {
+      --background: #0f172a;
+      --foreground: #f1f5f9;
+      --card: #1e293b;
+      --card-foreground: #f1f5f9;
+      --muted: #1e293b;
+      --muted-foreground: #94a3b8;
+      --border: #334155;
+      --primary-light: #14532d;
+    }
+
+    html.compact {
+      font-size: 14px;
+    }
+
+    html.compact .page-content {
+      padding: 1rem;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .admin-layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--foreground);
+      color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform 0.3s, width 0.3s;
+    }
+
+    html.dark .sidebar {
+      background: #0c1222;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-width-collapsed);
+    }
+
+    .sidebar.collapsed .sidebar-logo span,
+    .sidebar.collapsed .sidebar-badge,
+    .sidebar.collapsed .nav-section-title,
+    .sidebar.collapsed .nav-link span,
+    .sidebar.collapsed .nav-link-badge,
+    .sidebar.collapsed .user-details {
+      display: none;
+    }
+
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+      padding: 0.75rem;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+      padding: 1rem;
+    }
+
+    .sidebar.collapsed .sidebar-logo {
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .user-info {
+      justify-content: center;
+    }
+
+    .sidebar-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+    .sidebar-logo { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; }
+
+    .sidebar-logo-icon {
+      width: 2.25rem;
+      height: 2.25rem;
+      background: var(--primary);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: var(--primary);
+      color: white;
+      border-radius: 0.25rem;
+      font-size: 0.625rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-nav { padding: 1rem 0; }
+    .nav-section { padding: 0 1rem; margin-bottom: 1.5rem; }
+
+    .nav-section-title {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4);
+      padding: 0 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      color: rgba(255,255,255,0.7);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: var(--primary); color: white; }
+
+    .nav-link-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.2);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+    }
+
+    .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
+    .user-info { display: flex; align-items: center; gap: 0.75rem; }
+
+    .user-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+      overflow: hidden;
+    }
+
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .user-details { flex: 1; }
+    .user-name { font-weight: 600; font-size: 0.875rem; }
+    .user-role { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+
+    .main-content { 
+      flex: 1; 
+      margin-left: var(--sidebar-width); 
+      min-height: 100vh;
+      transition: margin-left 0.3s;
+    }
+
+    .main-content.sidebar-collapsed {
+      margin-left: var(--sidebar-width-collapsed);
+    }
+
+    .admin-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+
+    .mobile-menu-btn {
+      display: none;
+      padding: 0.5rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--foreground);
+    }
+
+    .page-title { font-size: 1.25rem; font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    .page-content { padding: 2rem; transition: padding 0.3s; }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-header-text h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .page-header-text p { color: var(--muted-foreground); font-size: 0.875rem; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--foreground); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-danger { background: var(--red); color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .stat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+
+    .stat-card-title { font-size: 0.875rem; color: var(--muted-foreground); font-weight: 500; }
+
+    .stat-card-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-card-value { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--card-foreground); }
+
+    .stat-card-change { font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem; }
+    .stat-card-change.up { color: var(--primary); }
+    .stat-card-change.down { color: var(--red); }
+
+    .filters-bar {
+      display: flex;
+      gap: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .filter-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+
+    .filter-field-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .filter-field.store-field .filter-select { min-width: 220px; }
+
+    .category-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .category-nav .filter-select { min-width: 180px; }
+
+    .nav-icon-btn {
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      color: var(--card-foreground);
+      cursor: pointer;
+      font-size: 0.875rem;
+      line-height: 1;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .nav-icon-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .nav-icon-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--card);
+      color: var(--card-foreground);
+      transition: border-color 0.2s, background-color 0.3s;
+    }
+
+    .search-input:focus { outline: none; border-color: var(--primary); }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted-foreground);
+    }
+
+    .filter-select {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--card);
+      color: var(--card-foreground);
+      min-width: 150px;
+      transition: border-color 0.2s, background-color 0.3s;
+    }
+
+    .filter-select:focus { outline: none; border-color: var(--primary); }
+
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .table-scroll {
+      max-height: min(70vh, 720px);
+      overflow: auto;
+    }
+
+    .data-table { width: 100%; border-collapse: collapse; }
+
+    .data-table th,
+    .data-table td {
+      padding: 1rem 1.5rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table th {
+      background: var(--muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--muted); }
+
+    .product-cell { display: block; }
+
+    .product-name { font-weight: 500; color: var(--card-foreground); }
+    .product-category { font-size: 0.75rem; color: var(--muted-foreground); }
+
+    .price-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .price-change.up { background: #fee2e2; color: var(--red); }
+    .price-change.down { background: var(--primary-light); color: var(--primary-dark); }
+    .price-change.same { background: #f3f4f6; color: var(--muted-foreground); }
+
+    html.dark .price-change.same { background: #374151; }
+
+    .store-badge {
+      display: inline-flex;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--muted);
+      color: var(--foreground);
+    }
+
+    .last-updated { font-size: 0.75rem; color: var(--muted-foreground); }
+
+    .actions-cell { display: flex; gap: 0.5rem; }
+
+    .action-btn {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-foreground);
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .action-btn.save { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .action-btn.delete:hover { border-color: var(--red); color: var(--red); }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .pagination-info { font-size: 0.875rem; color: var(--muted-foreground); line-height: 1.4; }
+
+    .history-mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    .history-mini-table th,
+    .history-mini-table td {
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .history-mini-table th {
+      color: var(--muted-foreground);
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .history-hint {
+      font-size: 0.8125rem;
+      color: var(--muted-foreground);
+      margin-bottom: 0.75rem;
+    }
+
+    th.col-hidden,
+    td.col-hidden { display: none; }
+    .pagination-btns { display: flex; gap: 0.5rem; }
+
+    .pagination-btn {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      color: var(--card-foreground);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .pagination-btn:hover { border-color: var(--primary); }
+    .pagination-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--card-foreground); }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--muted-foreground);
+      padding: 0.25rem;
+    }
+
+    .modal-close:hover { color: var(--foreground); }
+
+    .modal-body { padding: 1.5rem; }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--card-foreground); }
+
+    .form-input,
+    .form-select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--card);
+      color: var(--card-foreground);
+      transition: border-color 0.2s, background-color 0.3s;
+    }
+
+    .form-input:focus,
+    .form-select:focus { outline: none; border-color: var(--primary); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .modal-footer {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 1rem 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      z-index: 1000;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.show {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--primary);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0 !important; }
+      .mobile-menu-btn { display: flex; }
+      .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+      .sidebar-overlay.open { display: block; }
+    }
+
+    @media (max-width: 768px) {
+      .data-table thead { display: none; }
+      .data-table tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: var(--radius); }
+      .data-table td { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+      .data-table td::before { content: attr(data-label); font-weight: 600; color: var(--muted-foreground); font-size: 0.75rem; }
+      .data-table tr:hover td { background: var(--card); }
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    .icon { width: 1.25rem; height: 1.25rem; }
+    .icon-lg { width: 1.5rem; height: 1.5rem; }
+    .icon-sm { width: 1rem; height: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <span>GroceryTracker</span>
+        </a>
+        <span class="sidebar-badge">Admin Panel</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+          <a href="dashboard.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            <span>Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Management</div>
+          <a href="products.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <span>Products</span>
+            <span class="nav-link-badge">53</span>
+          </a>
+          <a href="stores.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            <span>Stores</span>
+            <span class="nav-link-badge">15</span>
+          </a>
+          <a href="categories.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            <span>Categories</span>
+          </a>
+          <a href="prices.html" class="nav-link active">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Price Updates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Communication</div>
+          <a href="messages.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <span>Messages</span>
+            <span class="nav-link-badge">6</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">System</div>
+          <a href="settings.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Admin User</div>
+            <div class="user-role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <header class="admin-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <h1 class="page-title">Price Updates</h1>
+        </div>
+        <div class="header-right">
+          <button class="logout-btn" onclick="logout()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="page-header">
+          <div class="page-header-text">
+            <h2>Manage Prices</h2>
+            <p>Pick a store, switch categories with ← →, then edit prices. History logs saves from this page.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Add Price Entry
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-title">Price Entries</span>
+              <div class="stat-card-icon" style="background: var(--primary-light); color: var(--primary-dark);">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-card-value" id="totalEntries">—</div>
+            <div class="stat-card-change">Total price records (live DB)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-title">Updated Today</span>
+              <div class="stat-card-icon" style="background: #dbeafe; color: var(--blue);">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-card-value" id="updatedToday">—</div>
+            <div class="stat-card-change" id="updatedTodayHint">Rows touched today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-title">Avg Price Change</span>
+              <div class="stat-card-icon" style="background: #fef3c7; color: var(--yellow);">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-card-value" id="avgChangeStat">—</div>
+            <div class="stat-card-change" id="avgChangeHint">Current category &amp; filters</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-title">Categories</span>
+              <div class="stat-card-icon" style="background: #fce7f3; color: #ec4899;">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-card-value" id="categoriesStat">—</div>
+            <div class="stat-card-change">In filtered list</div>
+          </div>
+        </div>
+
+        <div class="filters-bar">
+          <div class="filter-field store-field">
+            <span class="filter-field-label">Store</span>
+            <select class="filter-select" id="storeFilter" onchange="filterPrices()">
+              <option value="">All stores</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <span class="filter-field-label">Category (one per view)</span>
+            <div class="category-nav">
+              <button type="button" class="nav-icon-btn" id="categoryPrevBtn" onclick="changeCategoryPage(-1)" title="Previous category" aria-label="Previous category">←</button>
+              <select class="filter-select" id="categoryJumpSelect" onchange="onCategoryJump(this.value)">
+              </select>
+              <button type="button" class="nav-icon-btn" id="categoryNextBtn" onclick="changeCategoryPage(1)" title="Next category" aria-label="Next category">→</button>
+            </div>
+          </div>
+          <div class="search-box" style="flex: 1; min-width: 200px;">
+            <svg class="search-icon icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search in this category…" oninput="filterPrices()">
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr id="pricesTableHeadRow">
+                  <th>Product</th>
+                  <th id="thStore">Store</th>
+                  <th>Current</th>
+                  <th>Previous</th>
+                  <th>Change</th>
+                  <th>Updated</th>
+                  <th>History</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pricesTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span class="pagination-info" id="paginationInfo">Pick a category to see prices.</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add/Edit Price Modal -->
+  <div class="modal-overlay" id="priceModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Update Price</h3>
+        <button class="modal-close" onclick="closeModal()">
+          <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="priceForm">
+          <input type="hidden" id="priceId">
+          <div class="form-group">
+            <label class="form-label">Product *</label>
+            <select class="form-select" id="productSelect" required>
+              <option value="">Select a product</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Store *</label>
+              <select class="form-select" id="storeSelect" required>
+                <option value="">Select a store</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" id="newPriceLabel">New price (INR in database) *</label>
+              <input type="number" class="form-input" id="newPrice" placeholder="0" step="1" min="0" required>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="savePrice()">Save Price</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price history (saved prices from this admin session + server snapshot) -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="historyModalTitle">Price history</h3>
+        <button class="modal-close" type="button" onclick="closeHistoryModal()" aria-label="Close">
+          <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="history-hint" id="historyModalHint"></p>
+        <div id="historyModalBody"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" type="button" onclick="closeHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span id="toastMessage">Settings saved!</span>
+  </div>
+
+  <script src="../js/api-base.js"></script>
+  <script>
+    // ==========================================
+    // SETTINGS SYNC - Apply settings from localStorage
+    // ==========================================
+    function applySettings() {
+      // Apply theme
+      var savedTheme = localStorage.getItem('adminTheme') || 'light';
+      if (savedTheme === 'system') {
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', prefersDark);
+      } else if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
+      // Apply compact mode
+      var isCompact = localStorage.getItem('adminCompactMode') === 'true';
+      document.documentElement.classList.toggle('compact', isCompact);
+
+      // Apply sidebar collapsed
+      var isCollapsed = localStorage.getItem('adminSidebarCollapsed') === 'true';
+      document.getElementById('sidebar').classList.toggle('collapsed', isCollapsed);
+      document.getElementById('mainContent').classList.toggle('sidebar-collapsed', isCollapsed);
+
+      // Apply accent color
+      var savedColor = localStorage.getItem('adminAccentColor') || 'green';
+      var colors = {
+        green: { primary: '#22c55e', primaryDark: '#16a34a', primaryLight: '#dcfce7' },
+        blue: { primary: '#3b82f6', primaryDark: '#2563eb', primaryLight: '#dbeafe' },
+        purple: { primary: '#8b5cf6', primaryDark: '#7c3aed', primaryLight: '#ede9fe' },
+        orange: { primary: '#f59e0b', primaryDark: '#d97706', primaryLight: '#fef3c7' },
+        red: { primary: '#ef4444', primaryDark: '#dc2626', primaryLight: '#fee2e2' }
+      };
+      if (colors[savedColor]) {
+        document.documentElement.style.setProperty('--primary', colors[savedColor].primary);
+        document.documentElement.style.setProperty('--primary-dark', colors[savedColor].primaryDark);
+        document.documentElement.style.setProperty('--primary-light', colors[savedColor].primaryLight);
+      }
+    }
+
+    // Apply settings immediately
+    applySettings();
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      if (localStorage.getItem('adminTheme') === 'system') {
+        document.documentElement.classList.toggle('dark', e.matches);
+      }
+    });
+
+    // Listen for storage changes (when settings are changed in another tab)
+    window.addEventListener('storage', function(e) {
+      if (e.key && e.key.startsWith('admin')) {
+        applySettings();
+      }
+    });
+    window.addEventListener('currencychange', function() {
+      if (typeof renderPrices === 'function') renderPrices();
+    });
+
+    // ==========================================
+    // PAGE FUNCTIONALITY (live API + snapshot change %)
+    // ==========================================
+    if (!localStorage.getItem('adminToken')) {
+      window.location.href = '../user/login.html';
+    }
+
+    var API_BASE = window.API_BASE || ('http://' + location.hostname + ':5000/api');
+    var SNAPSHOT_KEY = 'adminPriceSnapshots';
+    var HISTORY_KEY = 'adminPriceHistory';
+    var prices = [];
+    var allProductsList = [];
+    var storesList = [];
+    var filteredPrices = [];
+    var categoryNames = [];
+    var currentCategoryIndex = 0;
+
+    function loadSnapshots() {
+      try {
+        return JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+    function saveSnapshots(obj) {
+      localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(obj));
+    }
+    function snapshotKey(productId, storeId) {
+      return String(productId) + '_' + String(storeId);
+    }
+
+    function loadHistoryMap() {
+      try {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveHistoryMap(obj) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(obj));
+    }
+
+    function appendHistory(productId, storeId, price) {
+      var m = loadHistoryMap();
+      var k = snapshotKey(productId, storeId);
+      if (!m[k]) m[k] = [];
+      var arr = m[k];
+      var last = arr.length ? arr[arr.length - 1] : null;
+      if (!last || Number(last.price) !== Number(price)) {
+        arr.push({ t: new Date().toISOString(), price: Number(price) });
+        if (arr.length > 50) arr.splice(0, arr.length - 50);
+      }
+      saveHistoryMap(m);
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function mergeRows(items) {
+      var snap = loadSnapshots();
+      return (items || []).map(function (row) {
+        var key = snapshotKey(row.productId, row.storeId);
+        var prev = snap[key] !== undefined ? snap[key] : row.currentPrice;
+        var changePct = prev > 0 ? ((row.currentPrice - prev) / prev) * 100 : 0;
+        return {
+          id: row.id,
+          productId: row.productId,
+          storeId: row.storeId,
+          product: row.product,
+          category: row.category || 'Uncategorized',
+          store: row.store,
+          currentPrice: row.currentPrice,
+          previousPrice: prev,
+          changePct: changePct,
+          image: row.image,
+          updatedAt: row.updatedAt
+        };
+      });
+    }
+
+    function fmt(n) {
+      return typeof window.formatMoney === 'function' ? window.formatMoney(n) : ('Rs. ' + n);
+    }
+
+    function fetchAll() {
+      var get = window.apiGetJson || function (path) {
+        return window.apiFetch(path, { method: 'GET' }).then(function (res) { return res.json(); });
+      };
+      return Promise.all([
+        get('/admin/products?limit=500'),
+        get('/admin/stores?limit=200'),
+        get('/admin/price-rows')
+      ]).then(function (results) {
+        allProductsList = (results[0].items || [])
+          .filter(function (p) { return (p.status || 'active') === 'active'; })
+          .map(function (p) {
+            return {
+              id: String(p._id),
+              name: p.name,
+              category: p.category && p.category.name ? p.category.name : '',
+              image: p.image || '',
+              price: p.price
+            };
+          });
+        storesList = (results[1].items || [])
+          .filter(function (s) { return (s.status || 'active') === 'active'; })
+          .map(function (s) {
+            return { id: String(s._id), name: s.name };
+          });
+        prices = mergeRows(results[2].items || []);
+        populateSelectors();
+        buildFilterDropdowns();
+        rebuildCategoryList();
+        filterPrices();
+      });
+    }
+
+    function rebuildCategoryList() {
+      var set = {};
+      prices.forEach(function (p) {
+        set[p.category || 'Uncategorized'] = true;
+      });
+      var prevName = categoryNames.length && categoryNames[currentCategoryIndex] ? categoryNames[currentCategoryIndex] : '';
+      categoryNames = Object.keys(set).sort();
+      if (!categoryNames.length) {
+        currentCategoryIndex = 0;
+      } else if (prevName && categoryNames.indexOf(prevName) >= 0) {
+        currentCategoryIndex = categoryNames.indexOf(prevName);
+      } else {
+        currentCategoryIndex = Math.min(currentCategoryIndex, categoryNames.length - 1);
+        if (currentCategoryIndex < 0) currentCategoryIndex = 0;
+      }
+      var sel = document.getElementById('categoryJumpSelect');
+      if (sel) {
+        sel.innerHTML = categoryNames.map(function (c) {
+          return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
+        }).join('');
+        if (categoryNames[currentCategoryIndex]) sel.value = categoryNames[currentCategoryIndex];
+      }
+      syncCategoryNav();
+    }
+
+    function syncCategoryNav() {
+      var prevBtn = document.getElementById('categoryPrevBtn');
+      var nextBtn = document.getElementById('categoryNextBtn');
+      var sel = document.getElementById('categoryJumpSelect');
+      var n = categoryNames.length;
+      var disabled = n <= 1;
+      if (prevBtn) prevBtn.disabled = disabled;
+      if (nextBtn) nextBtn.disabled = disabled;
+      if (sel && categoryNames[currentCategoryIndex]) sel.value = categoryNames[currentCategoryIndex];
+    }
+
+    function changeCategoryPage(delta) {
+      if (!categoryNames.length) return;
+      var n = categoryNames.length;
+      currentCategoryIndex = (currentCategoryIndex + delta + n) % n;
+      syncCategoryNav();
+      filterPrices();
+    }
+
+    function onCategoryJump(value) {
+      var idx = categoryNames.indexOf(value);
+      if (idx >= 0) {
+        currentCategoryIndex = idx;
+        syncCategoryNav();
+        filterPrices();
+      }
+    }
+
+    function populateSelectors() {
+      var ps = document.getElementById('productSelect');
+      ps.innerHTML = '<option value="">Select a product</option>';
+      allProductsList.forEach(function (p) {
+        var o = document.createElement('option');
+        o.value = p.id;
+        o.textContent = p.name + (p.category ? ' (' + p.category + ')' : '');
+        ps.appendChild(o);
+      });
+      var ss = document.getElementById('storeSelect');
+      ss.innerHTML = '<option value="">Select a store</option>';
+      storesList.forEach(function (s) {
+        var o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = s.name;
+        ss.appendChild(o);
+      });
+    }
+
+    function buildFilterDropdowns() {
+      var storeSel = document.getElementById('storeFilter');
+      var prevStore = storeSel.value;
+      storeSel.innerHTML = '<option value="">All stores</option>';
+      storesList.forEach(function (s) {
+        var o = document.createElement('option');
+        o.value = s.name;
+        o.textContent = s.name;
+        storeSel.appendChild(o);
+      });
+      if (prevStore) {
+        var ok = false;
+        for (var i = 0; i < storeSel.options.length; i++) {
+          if (storeSel.options[i].value === prevStore) { ok = true; break; }
+        }
+        if (ok) storeSel.value = prevStore;
+      }
+    }
+
+    function updateStats() {
+      var today = new Date().toDateString();
+      var nToday = prices.filter(function (p) {
+        return new Date(p.updatedAt).toDateString() === today;
+      }).length;
+      var cats = {};
+      prices.forEach(function (p) {
+        cats[p.category || 'Uncategorized'] = true;
+      });
+      document.getElementById('totalEntries').textContent = prices.length;
+      document.getElementById('updatedToday').textContent = nToday;
+      document.getElementById('categoriesStat').textContent = Object.keys(cats).length;
+      var avg = 0;
+      if (filteredPrices.length) {
+        avg = filteredPrices.reduce(function (s, p) { return s + p.changePct; }, 0) / filteredPrices.length;
+      }
+      document.getElementById('avgChangeStat').textContent = (avg >= 0 ? '+' : '') + avg.toFixed(2) + '%';
+    }
+
+    function renderPrices() {
+      var storeSel = document.getElementById('storeFilter');
+      var oneStore = storeSel && storeSel.value;
+      var hideStoreCol = !!oneStore;
+      var thStore = document.getElementById('thStore');
+      if (thStore) thStore.classList.toggle('col-hidden', hideStoreCol);
+
+      var tbody = document.getElementById('pricesTableBody');
+      var catLabel = categoryNames.length && categoryNames[currentCategoryIndex] ? categoryNames[currentCategoryIndex] : '—';
+
+      if (!categoryNames.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="padding:1.25rem;color:var(--muted-foreground);">No categories with prices yet. Add store prices from Products or use Add Price Entry.</td></tr>';
+        document.getElementById('paginationInfo').textContent = 'No price rows loaded.';
+        updateStats();
+        return;
+      }
+
+      if (!filteredPrices.length) {
+        var span = hideStoreCol ? 7 : 8;
+        tbody.innerHTML = '<tr><td colspan="' + span + '" style="padding:1.25rem;color:var(--muted-foreground);">No products match this search or store filter in this category.</td></tr>';
+        var storeNote = oneStore ? ' · Store: ' + oneStore : '';
+        document.getElementById('paginationInfo').textContent = 'Category: ' + catLabel + ' · 0 rows' + storeNote;
+        updateStats();
+        return;
+      }
+
+      tbody.innerHTML = filteredPrices.map(function (price) {
+        var change = price.changePct != null ? price.changePct.toFixed(1) : '0.0';
+        var changeClass = parseFloat(change) > 0 ? 'up' : parseFloat(change) < 0 ? 'down' : 'same';
+        var safeId = String(price.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        var pid = escapeHtml(price.productId);
+        var sid = escapeHtml(price.storeId);
+        var pname = escapeHtml(price.product);
+        var sname = escapeHtml(price.store);
+        var storeCell = hideStoreCol
+          ? ''
+          : '<td data-label="Store"><span class="store-badge">' + sname + '</span></td>';
+        return '<tr>' +
+          '<td data-label="Product">' +
+            '<div class="product-cell">' +
+              '<div class="product-name">' + pname + '</div>' +
+            '</div>' +
+          '</td>' +
+          storeCell +
+          '<td data-label="Current">' + fmt(price.currentPrice) + '</td>' +
+          '<td data-label="Previous">' + fmt(price.previousPrice) + '</td>' +
+          '<td data-label="Change"><span class="price-change ' + changeClass + '">' + (parseFloat(change) > 0 ? '+' : '') + change + '%</span></td>' +
+          '<td data-label="Updated"><span class="last-updated">' + formatDate(price.updatedAt) + '</span></td>' +
+          '<td data-label="History">' +
+            '<button type="button" class="action-btn" title="Price history" data-pid="' + pid + '" data-sid="' + sid + '" data-pname="' + pname + '" data-sname="' + sname + '" onclick="showPriceHistory(this)">' +
+              '<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+            '</button>' +
+          '</td>' +
+          '<td data-label="Actions">' +
+            '<div class="actions-cell">' +
+              '<button type="button" class="action-btn" onclick="editPrice(\'' + safeId + '\')" title="Edit">' +
+                '<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>' +
+                '</svg>' +
+              '</button>' +
+              '<button type="button" class="action-btn delete" onclick="deletePrice(\'' + safeId + '\')" title="Remove from store">' +
+                '<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>' +
+                '</svg>' +
+              '</button>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+
+      var storeNote = oneStore ? ' · Store: ' + oneStore : '';
+      document.getElementById('paginationInfo').textContent = filteredPrices.length
+        ? ('Category: ' + catLabel + ' · ' + filteredPrices.length + ' row' + (filteredPrices.length === 1 ? '' : 's') + storeNote)
+        : ('No rows in “' + catLabel + '” for this filter.' + storeNote);
+      updateStats();
+    }
+
+    function showPriceHistory(btn) {
+      var pid = btn.getAttribute('data-pid');
+      var sid = btn.getAttribute('data-sid');
+      var pname = btn.getAttribute('data-pname') || 'Product';
+      var sname = btn.getAttribute('data-sname') || 'Store';
+      var row = prices.find(function (p) {
+        return String(p.productId) === String(pid) && String(p.storeId) === String(sid);
+      });
+      var m = loadHistoryMap();
+      var key = snapshotKey(pid, sid);
+      var entries = (m[key] || []).slice().reverse();
+      document.getElementById('historyModalTitle').textContent = 'Price history · ' + pname;
+      var hint = document.getElementById('historyModalHint');
+      hint.textContent = sname + (row ? ' · Current ' + fmt(row.currentPrice) + ' (as of ' + formatDate(row.updatedAt) + ')' : '');
+      var body = document.getElementById('historyModalBody');
+      if (entries.length) {
+        body.innerHTML =
+          '<table class="history-mini-table"><thead><tr><th>When</th><th>Price</th></tr></thead><tbody>' +
+          entries.map(function (e) {
+            var d = new Date(e.t);
+            var when = Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
+            return '<tr><td>' + escapeHtml(when) + '</td><td>' + escapeHtml(fmt(e.price)) + '</td></tr>';
+          }).join('') +
+          '</tbody></table>' +
+          '<p class="history-hint" style="margin-top:0.75rem;margin-bottom:0">New entries are added when you save a price on this page.</p>';
+      } else {
+        body.innerHTML =
+          '<p class="history-hint" style="margin:0">No saved history yet for this product at this store. Change the price and save — each save adds a timestamped row here.</p>';
+      }
+      document.getElementById('historyModal').classList.add('open');
+    }
+
+    function closeHistoryModal() {
+      document.getElementById('historyModal').classList.remove('open');
+    }
+
+    function formatDate(dateStr) {
+      var date = new Date(dateStr);
+      if (Number.isNaN(date.getTime())) return '—';
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function filterPrices() {
+      var search = document.getElementById('searchInput').value.toLowerCase();
+      var store = document.getElementById('storeFilter').value;
+      var catName = categoryNames.length ? categoryNames[currentCategoryIndex] : '';
+      filteredPrices = prices.filter(function (price) {
+        var matchSearch = String(price.product).toLowerCase().indexOf(search) !== -1;
+        var matchCategory = !catName || price.category === catName;
+        var matchStore = !store || price.store === store;
+        return matchSearch && matchCategory && matchStore;
+      });
+      renderPrices();
+    }
+
+    function openModal() {
+      populateSelectors();
+      document.getElementById('priceModal').classList.add('open');
+      document.getElementById('modalTitle').textContent = 'Add store price';
+      document.getElementById('priceForm').reset();
+      document.getElementById('priceId').value = '';
+    }
+
+    function closeModal() {
+      document.getElementById('priceModal').classList.remove('open');
+    }
+
+    function editPrice(id) {
+      var price = prices.find(function (p) { return p.id === id; });
+      if (!price) return;
+      populateSelectors();
+      document.getElementById('priceModal').classList.add('open');
+      document.getElementById('modalTitle').textContent = 'Edit price';
+      document.getElementById('priceId').value = id;
+      document.getElementById('productSelect').value = price.productId;
+      document.getElementById('storeSelect').value = price.storeId;
+      document.getElementById('newPrice').value = price.currentPrice;
+    }
+
+    function putStorePrices(productId, entries) {
+      return window.apiFetch('/admin/products/' + encodeURIComponent(productId) + '/store-prices', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entries: entries })
+      }).then(function (res) {
+        return res.json().then(function (body) {
+          if (!res.ok) throw new Error(body.message || 'Save failed');
+        });
+      });
+    }
+
+    function savePrice() {
+      var priceId = document.getElementById('priceId').value;
+      var productId = document.getElementById('productSelect').value;
+      var storeId = document.getElementById('storeSelect').value;
+      var newPrice = parseInt(document.getElementById('newPrice').value, 10);
+      if (!productId || !storeId || Number.isNaN(newPrice) || newPrice < 0) {
+        showToast('Select product & store and enter a valid price (INR).');
+        return;
+      }
+      var snap = loadSnapshots();
+      var existing = prices.find(function (p) {
+        return String(p.productId) === String(productId) && String(p.storeId) === String(storeId);
+      });
+      if (existing) {
+        snap[snapshotKey(productId, storeId)] = existing.currentPrice;
+      }
+      saveSnapshots(snap);
+
+      window.apiFetch('/admin/products/' + encodeURIComponent(productId) + '/store-prices')
+        .then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok) throw new Error(body.message || 'Could not load store prices');
+            return body;
+          });
+        })
+        .then(function (sp) {
+          var entries = (sp.entries || [])
+            .filter(function (e) { return e.price != null && e.storeId; })
+            .map(function (e) {
+              return { storeId: e.storeId, price: Number(e.price) };
+            });
+          var found = false;
+          entries = entries.map(function (e) {
+            if (String(e.storeId) === String(storeId)) {
+              found = true;
+              return { storeId: storeId, price: newPrice };
+            }
+            return e;
+          });
+          if (!found) entries.push({ storeId: storeId, price: newPrice });
+          return putStorePrices(productId, entries);
+        })
+        .then(function () {
+          appendHistory(productId, storeId, newPrice);
+          return fetchAll();
+        })
+        .then(function () {
+          closeModal();
+          showToast('Price saved');
+        })
+        .catch(function (err) {
+          showToast(err.message || 'Could not save');
+        });
+    }
+
+    function deletePrice(id) {
+      if (!confirm('Remove this product price at this store?')) return;
+      var row = prices.find(function (p) { return p.id === id; });
+      if (!row) return;
+      var productId = row.productId;
+      var storeId = row.storeId;
+      window.apiFetch('/admin/products/' + encodeURIComponent(productId) + '/store-prices')
+        .then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok) throw new Error(body.message || 'Could not load');
+            return body;
+          });
+        })
+        .then(function (sp) {
+          var entries = (sp.entries || [])
+            .filter(function (e) {
+              return e.price != null && e.storeId && String(e.storeId) !== String(storeId);
+            })
+            .map(function (e) {
+              return { storeId: e.storeId, price: Number(e.price) };
+            });
+          return putStorePrices(productId, entries);
+        })
+        .then(function () {
+          var snap = loadSnapshots();
+          delete snap[snapshotKey(productId, storeId)];
+          saveSnapshots(snap);
+          return fetchAll();
+        })
+        .then(function () {
+          showToast('Store price removed');
+        })
+        .catch(function (err) {
+          showToast(err.message || 'Delete failed');
+        });
+    }
+
+    var userName = localStorage.getItem('adminName') || 'Admin';
+    var userPhoto = localStorage.getItem('adminAvatar');
+    document.getElementById('userName').textContent = userName;
+    var avatarEl = document.getElementById('userAvatar');
+    if (userPhoto) {
+      avatarEl.innerHTML = '<img src="' + userPhoto + '" alt="Admin">';
+    } else {
+      avatarEl.textContent = userName.charAt(0).toUpperCase();
+    }
+
+    // Sidebar toggle
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+
+    // Logout
+    function logout() {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminId');
+      localStorage.removeItem('adminLoggedIn');
+      localStorage.removeItem('adminEmail');
+      localStorage.removeItem('adminName');
+      window.location.href = '../user/login.html';
+    }
+
+    // Toast notification
+    function showToast(message) {
+      var toast = document.getElementById('toast');
+      document.getElementById('toastMessage').textContent = message;
+      toast.className = 'toast show success';
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Initialize
+    fetchAll().catch(function () {
+      var tb = document.getElementById('pricesTableBody');
+      if (tb) tb.innerHTML = '<tr><td colspan="8" style="padding:1rem;color:#b91c1c;">Could not load prices. Start the backend (npm run dev) and refresh.</td></tr>';
+      showToast('Could not load price data from server.');
+    });
+  </script>
+</body>
+</html>

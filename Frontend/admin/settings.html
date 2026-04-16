@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - GroceryTracker Admin</title>
+  <meta name="description" content="Admin settings for GroceryTracker dashboard.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #22c55e;
+      --primary-dark: #16a34a;
+      --primary-light: #dcfce7;
+      --background: #f0fdf4;
+      --foreground: #14532d;
+      --card: #ffffff;
+      --card-foreground: #14532d;
+      --muted: #f0fdf4;
+      --muted-foreground: #4b5563;
+      --border: #d1fae5;
+      --radius: 0.75rem;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --sidebar-width: 260px;
+      --sidebar-width-collapsed: 70px;
+    }
+
+    html.dark {
+      --background: #0f172a;
+      --foreground: #f1f5f9;
+      --card: #1e293b;
+      --card-foreground: #f1f5f9;
+      --muted: #1e293b;
+      --muted-foreground: #94a3b8;
+      --border: #334155;
+      --primary-light: #14532d;
+    }
+
+    html.compact {
+      font-size: 14px;
+    }
+
+    html.compact .page-content {
+      padding: 1rem;
+    }
+
+    html.compact .settings-card-body {
+      padding: 1rem;
+    }
+
+    html { color-scheme: light; }
+    html.dark { color-scheme: dark; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    html.dark body {
+      background-color: #0f172a;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .admin-layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--foreground);
+      color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform 0.3s, width 0.3s;
+    }
+
+    html.dark .sidebar {
+      background: #0c1222;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-width-collapsed);
+    }
+
+    .sidebar.collapsed .sidebar-logo span,
+    .sidebar.collapsed .sidebar-badge,
+    .sidebar.collapsed .nav-section-title,
+    .sidebar.collapsed .nav-link span,
+    .sidebar.collapsed .nav-link-badge,
+    .sidebar.collapsed .user-details {
+      display: none;
+    }
+
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+      padding: 0.75rem;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+      padding: 1rem;
+    }
+
+    .sidebar.collapsed .sidebar-logo {
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .user-info {
+      justify-content: center;
+    }
+
+    .sidebar-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-logo { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; }
+
+    .sidebar-logo-icon {
+      width: 2.25rem;
+      height: 2.25rem;
+      background: var(--primary);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: var(--primary);
+      color: white;
+      border-radius: 0.25rem;
+      font-size: 0.625rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-nav { padding: 1rem 0; }
+    .nav-section { padding: 0 1rem; margin-bottom: 1.5rem; }
+
+    .nav-section-title {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4);
+      padding: 0 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      color: rgba(255,255,255,0.7);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: var(--primary); color: white; }
+
+    .nav-link-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.2);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+    }
+
+    .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
+    .user-info { display: flex; align-items: center; gap: 0.75rem; }
+
+    .user-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+      overflow: hidden;
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-details { flex: 1; }
+    .user-name { font-weight: 600; font-size: 0.875rem; }
+    .user-role { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+
+    .main-content { 
+      flex: 1; 
+      margin-left: var(--sidebar-width); 
+      min-height: 100vh; 
+      transition: margin-left 0.3s;
+    }
+
+    .main-content.sidebar-collapsed {
+      margin-left: var(--sidebar-width-collapsed);
+    }
+
+    .admin-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+
+    .mobile-menu-btn {
+      display: none;
+      padding: 0.5rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--foreground);
+    }
+
+    .page-title { font-size: 1.25rem; font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    .page-content { padding: 2rem; transition: padding 0.3s; }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-header h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .page-header p { color: var(--muted-foreground); font-size: 0.875rem; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--foreground); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-danger { background: var(--red); color: white; }
+    .btn-danger:hover { background: #dc2626; }
+
+    /* Settings Tabs */
+    .settings-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+      overflow-x: auto;
+    }
+
+    .settings-tab {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .settings-tab:hover { color: var(--foreground); }
+    .settings-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* Settings Cards */
+    .settings-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .settings-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .settings-card-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-card-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--card-foreground); }
+    .settings-card-description { font-size: 0.875rem; color: var(--muted-foreground); }
+
+    .settings-card-body { padding: 1.5rem; transition: padding 0.3s; }
+    .settings-card-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      background: var(--muted);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group:last-child { margin-bottom: 0; }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--card-foreground);
+    }
+
+    .form-hint { font-size: 0.75rem; color: var(--muted-foreground); margin-top: 0.375rem; }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-family: inherit;
+      transition: border-color 0.2s, background-color 0.3s;
+      background: var(--card);
+      color: var(--card-foreground);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-row {
+      display: grid;
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .form-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Toggle Switch */
+    .toggle-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .toggle-group:last-child { border-bottom: none; }
+
+    .toggle-label h4 { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.125rem; color: var(--card-foreground); }
+    .toggle-label p { font-size: 0.75rem; color: var(--muted-foreground); }
+
+    .toggle-switch {
+      position: relative;
+      width: 3rem;
+      height: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--border);
+      border-radius: 9999px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider::before {
+      position: absolute;
+      content: "";
+      height: 1rem;
+      width: 1rem;
+      left: 0.25rem;
+      bottom: 0.25rem;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--primary);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(1.5rem);
+    }
+
+    /* Profile Section */
+    .profile-section {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+
+    .profile-avatar {
+      width: 5rem;
+      height: 5rem;
+      background: var(--primary-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+      flex-shrink: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-info { flex: 1; }
+
+    .avatar-upload {
+      margin-top: 0.75rem;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    /* Danger Zone */
+    .danger-zone {
+      border-color: #fecaca;
+    }
+
+    html.dark .danger-zone {
+      border-color: #7f1d1d;
+    }
+
+    .danger-zone .settings-card-header {
+      background: #fef2f2;
+      border-bottom-color: #fecaca;
+    }
+
+    html.dark .danger-zone .settings-card-header {
+      background: #450a0a;
+      border-bottom-color: #7f1d1d;
+    }
+
+    .danger-zone .settings-card-title {
+      color: var(--red);
+    }
+
+    .danger-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .danger-item:last-child { border-bottom: none; }
+
+    .danger-item-info h4 { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.125rem; color: var(--card-foreground); }
+    .danger-item-info p { font-size: 0.75rem; color: var(--muted-foreground); }
+
+    /* Tab Panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Theme Options */
+    .theme-options {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .theme-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .theme-option input {
+      display: none;
+    }
+
+    .theme-preview {
+      width: 80px;
+      height: 60px;
+      border-radius: 0.5rem;
+      border: 2px solid var(--border);
+      overflow: hidden;
+      transition: border-color 0.2s;
+      display: flex;
+    }
+
+    .theme-option input:checked + .theme-preview {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .theme-preview-light {
+      background: linear-gradient(to right, #14532d 30%, #f0fdf4 30%);
+    }
+
+    .theme-preview-dark {
+      background: linear-gradient(to right, #0c1222 30%, #0f172a 30%);
+    }
+
+    .theme-preview-system {
+      background: linear-gradient(to right, #14532d 15%, #f0fdf4 15%, #f0fdf4 50%, #0c1222 50%, #0c1222 65%, #0f172a 65%);
+    }
+
+    .theme-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+    }
+
+    .theme-option input:checked ~ .theme-label {
+      color: var(--primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0 !important; }
+      .mobile-menu-btn { display: flex; }
+      .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+      .sidebar-overlay.open { display: block; }
+    }
+
+    @media (max-width: 640px) {
+      .profile-section {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      
+      .danger-item {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+    }
+
+    .icon { width: 1.25rem; height: 1.25rem; }
+    .icon-lg { width: 1.5rem; height: 1.5rem; }
+    .icon-sm { width: 1rem; height: 1rem; }
+
+    .success-message {
+      display: none;
+      padding: 0.75rem 1rem;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+
+    html.dark .success-message {
+      background: #14532d;
+      color: #86efac;
+    }
+
+    .success-message.show { display: block; }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 1rem 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      z-index: 1000;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.show {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--primary);
+    }
+
+    .toast.error {
+      border-left: 4px solid var(--red);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <span>GroceryTracker</span>
+        </a>
+        <span class="sidebar-badge">Admin Panel</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+          <a href="dashboard.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            <span>Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Management</div>
+          <a href="products.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <span>Products</span>
+            <span class="nav-link-badge">47</span>
+          </a>
+          <a href="stores.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            <span>Stores</span>
+            <span class="nav-link-badge">15</span>
+          </a>
+          <a href="categories.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            <span>Categories</span>
+          </a>
+          <a href="prices.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Price Updates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Communication</div>
+          <a href="messages.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <span>Messages</span>
+            <span class="nav-link-badge">3</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">System</div>
+          <a href="settings.html" class="nav-link active">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Admin User</div>
+            <div class="user-role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <header class="admin-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <h1 class="page-title">Settings</h1>
+        </div>
+        <div class="header-right">
+          <button class="logout-btn" onclick="logout()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="page-header">
+          <h2>Settings</h2>
+          <p>Manage your account settings and preferences</p>
+        </div>
+
+        <!-- Settings Tabs -->
+        <div class="settings-tabs">
+          <button class="settings-tab active" data-tab="profile" onclick="switchTab('profile')">Profile</button>
+          <button class="settings-tab" data-tab="account" onclick="switchTab('account')">Account</button>
+          <button class="settings-tab" data-tab="notifications" onclick="switchTab('notifications')">Notifications</button>
+          <button class="settings-tab" data-tab="appearance" onclick="switchTab('appearance')">Appearance</button>
+          <button class="settings-tab" data-tab="security" onclick="switchTab('security')">Security</button>
+          <button class="settings-tab" data-tab="admins" onclick="switchTab('admins')">Administrators</button>
+        </div>
+
+        <!-- Profile Tab -->
+        <div class="tab-panel active" id="profile-panel">
+          <div class="settings-grid">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Profile Information</h3>
+                <p class="settings-card-description">Update your personal details</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="success-message" id="profileSuccess">Profile updated successfully!</div>
+                <div class="profile-section">
+                  <div class="profile-avatar" id="profileAvatar">A</div>
+                  <div class="profile-info">
+                    <h4 style="font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem;">Profile Photo</h4>
+                    <p style="font-size: 0.75rem; color: var(--muted-foreground); margin-bottom: 0.75rem;">JPG, GIF or PNG. Max size 2MB</p>
+                    <div class="avatar-upload">
+                      <input type="file" id="avatarInput" class="file-input" accept="image/*" onchange="handleAvatarUpload(event)">
+                      <button class="btn btn-outline" onclick="document.getElementById('avatarInput').click()">Change Photo</button>
+                      <button class="btn btn-outline" onclick="removeAvatar()" style="margin-left: 0.5rem; border-color: var(--red); color: var(--red);">Remove</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label" for="firstName">First Name</label>
+                      <input type="text" id="firstName" class="form-input" value="Admin">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="lastName">Last Name</label>
+                      <input type="text" id="lastName" class="form-input" value="User">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-input" value="">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="phone">Phone Number</label>
+                    <input type="tel" id="phone" class="form-input" placeholder="+91 12345 67890">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="bio">Bio</label>
+                    <textarea id="bio" class="form-input" rows="3" placeholder="Tell us about yourself..."></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-card-footer">
+                <button class="btn btn-outline" onclick="resetProfile()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Tab -->
+        <div class="tab-panel" id="account-panel">
+          <div class="settings-grid">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Account Settings</h3>
+                <p class="settings-card-description">Manage your account preferences</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="success-message" id="accountSuccess">Account settings saved!</div>
+                <div class="form-group">
+                  <label class="form-label" for="language">Language</label>
+                  <select id="language" class="form-select" onchange="saveAccountSettings()">
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                    <option value="mr">Marathi</option>
+                    <option value="ta">Tamil</option>
+                    <option value="te">Telugu</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="timezone">Timezone</label>
+                  <select id="timezone" class="form-select" onchange="saveAccountSettings()">
+                    <option value="IST">India Standard Time (IST)</option>
+                    <option value="UTC">UTC</option>
+                    <option value="EST">Eastern Standard Time (EST)</option>
+                    <option value="PST">Pacific Standard Time (PST)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="currency">Currency</label>
+                  <select id="currency" class="form-select" onchange="saveAccountSettings()">
+                    <option value="INR">Indian Rupee (Rs.)</option>
+                    <option value="USD">US Dollar ($)</option>
+                    <option value="EUR">Euro</option>
+                    <option value="GBP">British Pound</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="dateFormat">Date Format</label>
+                  <select id="dateFormat" class="form-select" onchange="saveAccountSettings()">
+                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                  </select>
+                </div>
+              </div>
+              <div class="settings-card-footer">
+                <button class="btn btn-primary" onclick="saveAccount()">Save Changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div class="tab-panel" id="notifications-panel">
+          <div class="settings-grid">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Email Notifications</h3>
+                <p class="settings-card-description">Choose what emails you receive</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>New Messages</h4>
+                    <p>Get notified when customers send messages</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notifyMessages" onchange="saveNotificationSettings()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Price Alerts</h4>
+                    <p>Get notified about significant price changes</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notifyPriceAlerts" onchange="saveNotificationSettings()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Weekly Reports</h4>
+                    <p>Receive weekly summary reports</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notifyWeeklyReports" onchange="saveNotificationSettings()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Marketing Emails</h4>
+                    <p>Receive tips and feature updates</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notifyMarketing" onchange="saveNotificationSettings()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>New Store Added</h4>
+                    <p>Get notified when new stores are added</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notifyNewStore" onchange="saveNotificationSettings()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Low Stock Alerts</h4>
+                    <p>Get notified when products run low</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notifyLowStock" onchange="saveNotificationSettings()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Push Notifications</h3>
+                <p class="settings-card-description">Manage browser notifications</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Enable Push Notifications</h4>
+                    <p>Receive notifications in your browser</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="pushEnabled" onchange="saveNotificationSettings()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Sound</h4>
+                    <p>Play sound for notifications</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notifySound" onchange="saveNotificationSettings()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Administrators Tab -->
+        <div class="tab-panel" id="admins-panel">
+          <div class="settings-grid">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Administrators</h3>
+                <p class="settings-card-description">People who can sign in to this admin dashboard. Passwords are stored securely on the server.</p>
+              </div>
+              <div class="settings-card-body">
+                <div id="adminsList" style="min-height: 2rem;"></div>
+                <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--border);">
+                <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem;">Add administrator</h4>
+                <div class="form-group">
+                  <label class="form-label" for="newAdminName">Name</label>
+                  <input type="text" id="newAdminName" class="form-input" placeholder="Full name" autocomplete="name">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="newAdminEmail">Email</label>
+                  <input type="email" id="newAdminEmail" class="form-input" placeholder="name@example.com" autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="newAdminPassword">Password</label>
+                  <input type="password" id="newAdminPassword" class="form-input" placeholder="At least 8 characters" autocomplete="new-password">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="addAdministrator()">Add administrator</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appearance Tab -->
+        <div class="tab-panel" id="appearance-panel">
+          <div class="settings-grid">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Theme</h3>
+                <p class="settings-card-description">Customize the look and feel of the dashboard</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <label class="form-label">Select Theme</label>
+                  <div class="theme-options">
+                    <label class="theme-option">
+                      <input type="radio" name="theme" value="light" onchange="applyTheme('light')">
+                      <div class="theme-preview theme-preview-light"></div>
+                      <span class="theme-label">Light</span>
+                    </label>
+                    <label class="theme-option">
+                      <input type="radio" name="theme" value="dark" onchange="applyTheme('dark')">
+                      <div class="theme-preview theme-preview-dark"></div>
+                      <span class="theme-label">Dark</span>
+                    </label>
+                    <label class="theme-option">
+                      <input type="radio" name="theme" value="system" onchange="applyTheme('system')">
+                      <div class="theme-preview theme-preview-system"></div>
+                      <span class="theme-label">System</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Layout</h3>
+                <p class="settings-card-description">Customize the layout options</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Compact Mode</h4>
+                    <p>Use smaller spacing and fonts</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="compactMode" onchange="toggleCompactMode()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Sidebar Collapsed</h4>
+                    <p>Show only icons in sidebar by default</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="sidebarCollapsed" onchange="toggleSidebarCollapsed()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Animations</h4>
+                    <p>Enable smooth transitions and animations</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="animations" checked onchange="saveAppearanceSettings()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Accent Color</h3>
+                <p class="settings-card-description">Choose your primary accent color</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="form-group">
+                  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <label style="cursor: pointer;">
+                      <input type="radio" name="accentColor" value="green" style="display: none;" onchange="changeAccentColor('green')">
+                      <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #22c55e; border: 3px solid transparent;" class="accent-option" data-color="green"></div>
+                    </label>
+                    <label style="cursor: pointer;">
+                      <input type="radio" name="accentColor" value="blue" style="display: none;" onchange="changeAccentColor('blue')">
+                      <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #3b82f6; border: 3px solid transparent;" class="accent-option" data-color="blue"></div>
+                    </label>
+                    <label style="cursor: pointer;">
+                      <input type="radio" name="accentColor" value="purple" style="display: none;" onchange="changeAccentColor('purple')">
+                      <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #8b5cf6; border: 3px solid transparent;" class="accent-option" data-color="purple"></div>
+                    </label>
+                    <label style="cursor: pointer;">
+                      <input type="radio" name="accentColor" value="orange" style="display: none;" onchange="changeAccentColor('orange')">
+                      <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #f59e0b; border: 3px solid transparent;" class="accent-option" data-color="orange"></div>
+                    </label>
+                    <label style="cursor: pointer;">
+                      <input type="radio" name="accentColor" value="red" style="display: none;" onchange="changeAccentColor('red')">
+                      <div style="width: 2.5rem; height: 2.5rem; border-radius: 50%; background: #ef4444; border: 3px solid transparent;" class="accent-option" data-color="red"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Tab -->
+        <div class="tab-panel" id="security-panel">
+          <div class="settings-grid">
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Change Password</h3>
+                <p class="settings-card-description">Update your password regularly for security</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="success-message" id="passwordSuccess">Password changed successfully!</div>
+                <div class="form-group">
+                  <label class="form-label" for="currentPassword">Current Password</label>
+                  <input type="password" id="currentPassword" class="form-input" placeholder="Enter current password">
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="newPassword">New Password</label>
+                  <input type="password" id="newPassword" class="form-input" placeholder="Enter new password">
+                  <p class="form-hint">Password must be at least 8 characters long</p>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                  <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password">
+                </div>
+              </div>
+              <div class="settings-card-footer">
+                <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Two-Factor Authentication</h3>
+                <p class="settings-card-description">Add an extra layer of security</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="toggle-group">
+                  <div class="toggle-label">
+                    <h4>Enable 2FA</h4>
+                    <p>Require a code from your phone to log in</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="twoFactor" onchange="toggle2FA()">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Sessions</h3>
+                <p class="settings-card-description">Manage your active sessions</p>
+              </div>
+              <div class="settings-card-body">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                  <div>
+                    <h4 style="font-size: 0.875rem; font-weight: 500;">Current Session</h4>
+                    <p style="font-size: 0.75rem; color: var(--muted-foreground);">Your current browser session</p>
+                  </div>
+                  <span style="padding: 0.25rem 0.5rem; background: var(--primary-light); color: var(--primary); border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;">Active</span>
+                </div>
+                <div style="padding-top: 1rem;">
+                  <button class="btn btn-outline" style="border-color: var(--red); color: var(--red);" onclick="logoutAllSessions()">Log Out All Other Sessions</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card danger-zone">
+              <div class="settings-card-header">
+                <h3 class="settings-card-title">Danger Zone</h3>
+                <p class="settings-card-description">Irreversible actions - proceed with caution</p>
+              </div>
+              <div class="settings-card-body">
+                <div class="danger-item">
+                  <div class="danger-item-info">
+                    <h4>Delete All Data</h4>
+                    <p>Permanently delete all products, stores, and price data</p>
+                  </div>
+                  <button class="btn btn-outline" style="border-color: var(--red); color: var(--red);" onclick="deleteAllData()">Delete Data</button>
+                </div>
+                <div class="danger-item">
+                  <div class="danger-item-info">
+                    <h4>Export Data</h4>
+                    <p>Download all your data before deleting</p>
+                  </div>
+                  <button class="btn btn-outline" onclick="exportData()">Export</button>
+                </div>
+                <div class="danger-item">
+                  <div class="danger-item-info">
+                    <h4>Delete Account</h4>
+                    <p>Permanently delete your admin account and all data</p>
+                  </div>
+                  <button class="btn btn-danger" onclick="deleteAccount()">Delete Account</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api-base.js"></script>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span id="toastMessage">Settings saved!</span>
+  </div>
+
+  <script>
+    // Check if logged in
+    if (!localStorage.getItem('adminToken')) {
+      window.location.href = '../user/login.html';
+    }
+
+    // Initialize variables
+    var userName = localStorage.getItem('adminName') || 'Admin User';
+
+    // Apply saved theme on load
+    function initializeTheme() {
+      var savedTheme = localStorage.getItem('adminTheme') || 'light';
+      var themeRadio = document.querySelector('input[name="theme"][value="' + savedTheme + '"]');
+      if (themeRadio) {
+        themeRadio.checked = true;
+      }
+      applyTheme(savedTheme, false);
+    }
+
+    // Apply theme
+    function applyTheme(theme, showToast) {
+      if (showToast === undefined) showToast = true;
+      
+      localStorage.setItem('adminTheme', theme);
+      document.documentElement.setAttribute('data-theme', theme);
+      
+      if (theme === 'system') {
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', prefersDark);
+      } else if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      
+      if (showToast) {
+        showToastNotification('Theme changed to ' + theme);
+      }
+    }
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      if (localStorage.getItem('adminTheme') === 'system') {
+        document.documentElement.classList.toggle('dark', e.matches);
+      }
+    });
+
+    // Toggle compact mode
+    function toggleCompactMode() {
+      var isCompact = document.getElementById('compactMode').checked;
+      document.documentElement.classList.toggle('compact', isCompact);
+      localStorage.setItem('adminCompactMode', isCompact);
+      showToastNotification(isCompact ? 'Compact mode enabled' : 'Compact mode disabled');
+    }
+
+    // Toggle sidebar collapsed
+    function toggleSidebarCollapsed() {
+      var isCollapsed = document.getElementById('sidebarCollapsed').checked;
+      document.getElementById('sidebar').classList.toggle('collapsed', isCollapsed);
+      document.getElementById('mainContent').classList.toggle('sidebar-collapsed', isCollapsed);
+      localStorage.setItem('adminSidebarCollapsed', isCollapsed);
+      showToastNotification(isCollapsed ? 'Sidebar collapsed' : 'Sidebar expanded');
+    }
+
+    // Change accent color
+    function changeAccentColor(color) {
+      var colors = {
+        green: { primary: '#22c55e', primaryDark: '#16a34a', primaryLight: '#dcfce7' },
+        blue: { primary: '#3b82f6', primaryDark: '#2563eb', primaryLight: '#dbeafe' },
+        purple: { primary: '#8b5cf6', primaryDark: '#7c3aed', primaryLight: '#ede9fe' },
+        orange: { primary: '#f59e0b', primaryDark: '#d97706', primaryLight: '#fef3c7' },
+        red: { primary: '#ef4444', primaryDark: '#dc2626', primaryLight: '#fee2e2' }
+      };
+
+      if (colors[color]) {
+        document.documentElement.style.setProperty('--primary', colors[color].primary);
+        document.documentElement.style.setProperty('--primary-dark', colors[color].primaryDark);
+        document.documentElement.style.setProperty('--primary-light', colors[color].primaryLight);
+        localStorage.setItem('adminAccentColor', color);
+        
+        // Update accent option visual
+        document.querySelectorAll('.accent-option').forEach(function(el) {
+          el.style.borderColor = el.dataset.color === color ? colors[color].primary : 'transparent';
+        });
+        
+        showToastNotification('Accent color changed');
+      }
+    }
+
+    // Initialize accent color
+    function initializeAccentColor() {
+      var savedColor = localStorage.getItem('adminAccentColor') || 'green';
+      var colorRadio = document.querySelector('input[name="accentColor"][value="' + savedColor + '"]');
+      if (colorRadio) {
+        colorRadio.checked = true;
+        changeAccentColor(savedColor);
+      }
+    }
+
+    // Set user info
+    document.getElementById('userName').textContent = userName;
+
+    // Update avatar display
+    function updateAvatarDisplay() {
+      var userAvatarEl = document.getElementById('userAvatar');
+      var profileAvatarEl = document.getElementById('profileAvatar');
+      var savedAvatar = localStorage.getItem('adminAvatar');
+
+      if (savedAvatar) {
+        userAvatarEl.innerHTML = '<img src="' + savedAvatar + '" alt="Avatar">';
+        profileAvatarEl.innerHTML = '<img src="' + savedAvatar + '" alt="Avatar">';
+      } else {
+        var initial = userName.charAt(0).toUpperCase();
+        userAvatarEl.textContent = initial;
+        profileAvatarEl.textContent = initial;
+      }
+    }
+
+    updateAvatarDisplay();
+
+    // Handle avatar upload
+    function handleAvatarUpload(event) {
+      var file = event.target.files[0];
+      if (file) {
+        if (file.size > 2 * 1024 * 1024) {
+          showToastNotification('File size must be less than 2MB', 'error');
+          return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          localStorage.setItem('adminAvatar', e.target.result);
+          updateAvatarDisplay();
+          showToastNotification('Profile photo updated');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Remove avatar
+    function removeAvatar() {
+      localStorage.removeItem('adminAvatar');
+      updateAvatarDisplay();
+      showToastNotification('Profile photo removed');
+    }
+
+    // Sidebar toggle for mobile
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+
+    // Logout
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminId');
+        localStorage.removeItem('adminLoggedIn');
+        localStorage.removeItem('adminEmail');
+        localStorage.removeItem('adminName');
+        window.location.href = '../user/login.html';
+      }
+    }
+
+    // Switch tabs
+    function switchTab(tab) {
+      // Update tab buttons
+      document.querySelectorAll('.settings-tab').forEach(function(t) {
+        t.classList.remove('active');
+      });
+      document.querySelector('.settings-tab[data-tab="' + tab + '"]').classList.add('active');
+
+      // Update panels
+      document.querySelectorAll('.tab-panel').forEach(function(p) {
+        p.classList.remove('active');
+      });
+      document.getElementById(tab + '-panel').classList.add('active');
+      if (tab === 'admins' && typeof loadAdmins === 'function') {
+        loadAdmins();
+      }
+    }
+
+    function escapeHtmlAdmins(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function loadAdmins() {
+      var listEl = document.getElementById('adminsList');
+      if (!listEl || !window.apiFetch) return;
+      listEl.innerHTML = '<p style="color:var(--muted-foreground);font-size:0.875rem;">Loading…</p>';
+      window.apiFetch('/admin/admins')
+        .then(function (res) {
+          return res.json().then(function (body) {
+            return { ok: res.ok, body: body };
+          });
+        })
+        .then(function (x) {
+          if (!x.ok) throw new Error(x.body.message || 'Failed to load admins');
+          var items = x.body.items || [];
+          var myId = localStorage.getItem('adminId');
+          if (!items.length) {
+            listEl.innerHTML = '<p style="color:var(--muted-foreground);">No administrators found.</p>';
+            return;
+          }
+          listEl.innerHTML = items.map(function (a) {
+            var isSelf = String(a.id) === String(myId);
+            var safeId = String(a.id).replace(/'/g, "\\'");
+            return '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;padding:0.65rem 0;border-bottom:1px solid var(--border);">' +
+              '<div><strong>' + escapeHtmlAdmins(a.name) + '</strong><br>' +
+              '<span style="font-size:0.8rem;color:var(--muted-foreground);">' + escapeHtmlAdmins(a.email) + '</span></div>' +
+              (isSelf
+                ? '<span style="font-size:0.75rem;color:var(--muted-foreground);">You</span>'
+                : '<button type="button" class="btn btn-outline" style="font-size:0.75rem;padding:0.35rem 0.65rem;" onclick="removeAdministrator(\'' + safeId + '\')">Remove</button>') +
+              '</div>';
+          }).join('');
+        })
+        .catch(function (err) {
+          listEl.innerHTML = '<p style="color:var(--red);font-size:0.875rem;">' + escapeHtmlAdmins(err.message) + '</p>';
+        });
+    }
+
+    function addAdministrator() {
+      var name = document.getElementById('newAdminName').value.trim();
+      var email = document.getElementById('newAdminEmail').value.trim();
+      var password = document.getElementById('newAdminPassword').value;
+      if (!email || !password) {
+        showToastNotification('Email and password are required', 'error');
+        return;
+      }
+      if (password.length < 8) {
+        showToastNotification('Password must be at least 8 characters', 'error');
+        return;
+      }
+      window.apiFetch('/admin/admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password, name: name })
+      })
+        .then(function (res) {
+          return res.json().then(function (body) {
+            return { ok: res.ok, body: body };
+          });
+        })
+        .then(function (x) {
+          if (!x.ok) throw new Error(x.body.message || 'Could not add admin');
+          showToastNotification('Administrator added. They can sign in with this email and password.');
+          document.getElementById('newAdminName').value = '';
+          document.getElementById('newAdminEmail').value = '';
+          document.getElementById('newAdminPassword').value = '';
+          loadAdmins();
+        })
+        .catch(function (err) {
+          showToastNotification(err.message || 'Could not add admin', 'error');
+        });
+    }
+
+    function removeAdministrator(id) {
+      if (!confirm('Remove this administrator? They will no longer be able to sign in.')) return;
+      window.apiFetch('/admin/admins/' + encodeURIComponent(id), { method: 'DELETE' })
+        .then(function (res) {
+          return res.json().then(function (body) {
+            return { ok: res.ok, body: body };
+          });
+        })
+        .then(function (x) {
+          if (!x.ok) throw new Error(x.body.message || 'Could not remove');
+          showToastNotification('Administrator removed');
+          loadAdmins();
+        })
+        .catch(function (err) {
+          showToastNotification(err.message || 'Could not remove', 'error');
+        });
+    }
+
+    // Show toast notification
+    function showToastNotification(message, type) {
+      var toast = document.getElementById('toast');
+      var toastMessage = document.getElementById('toastMessage');
+      
+      toastMessage.textContent = message;
+      toast.className = 'toast show ' + (type || 'success');
+      
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Show success message in card
+    function showSuccess(elementId, message) {
+      var el = document.getElementById(elementId);
+      if (el) {
+        el.textContent = message;
+        el.classList.add('show');
+        setTimeout(function() {
+          el.classList.remove('show');
+        }, 3000);
+      }
+    }
+
+    // Save profile
+    function saveProfile() {
+      var firstName = document.getElementById('firstName').value;
+      var lastName = document.getElementById('lastName').value;
+      var email = document.getElementById('email').value;
+      var phone = document.getElementById('phone').value;
+      var bio = document.getElementById('bio').value;
+
+      if (!firstName || !lastName) {
+        showToastNotification('Please enter your first and last name', 'error');
+        return;
+      }
+
+      var fullName = firstName + ' ' + lastName;
+      localStorage.setItem('adminName', fullName);
+      localStorage.setItem('adminEmail', email);
+      localStorage.setItem('adminPhone', phone);
+      localStorage.setItem('adminBio', bio);
+
+      userName = fullName;
+      document.getElementById('userName').textContent = fullName;
+      updateAvatarDisplay();
+
+      showSuccess('profileSuccess', 'Profile updated successfully!');
+      showToastNotification('Profile saved');
+    }
+
+    // Reset profile form
+    function resetProfile() {
+      loadSettings();
+      showToastNotification('Changes discarded');
+    }
+
+    // Save account settings (auto-save on change)
+    function saveAccountSettings() {
+      var language = document.getElementById('language').value;
+      var timezone = document.getElementById('timezone').value;
+      var currency = document.getElementById('currency').value;
+      var dateFormat = document.getElementById('dateFormat').value;
+
+      localStorage.setItem('adminLanguage', language);
+      localStorage.setItem('adminTimezone', timezone);
+      localStorage.setItem('adminCurrency', currency);
+      localStorage.setItem('adminDateFormat', dateFormat);
+      try {
+        window.dispatchEvent(new Event('currencychange'));
+      } catch (e) {}
+    }
+
+    // Save account
+    function saveAccount() {
+      saveAccountSettings();
+      showSuccess('accountSuccess', 'Account settings saved!');
+      showToastNotification('Account settings saved');
+    }
+
+    // Save notification settings
+    function saveNotificationSettings() {
+      var settings = {
+        messages: document.getElementById('notifyMessages').checked,
+        priceAlerts: document.getElementById('notifyPriceAlerts').checked,
+        weeklyReports: document.getElementById('notifyWeeklyReports').checked,
+        marketing: document.getElementById('notifyMarketing').checked,
+        newStore: document.getElementById('notifyNewStore').checked,
+        lowStock: document.getElementById('notifyLowStock').checked,
+        pushEnabled: document.getElementById('pushEnabled').checked,
+        sound: document.getElementById('notifySound').checked
+      };
+      
+      localStorage.setItem('adminNotifications', JSON.stringify(settings));
+      showToastNotification('Notification settings saved');
+    }
+
+    // Save appearance settings
+    function saveAppearanceSettings() {
+      var animations = document.getElementById('animations').checked;
+      localStorage.setItem('adminAnimations', animations);
+      
+      if (!animations) {
+        document.documentElement.style.setProperty('--transition', 'none');
+      } else {
+        document.documentElement.style.removeProperty('--transition');
+      }
+    }
+
+    // Change password (server-side)
+    function changePassword() {
+      var current = document.getElementById('currentPassword').value;
+      var newPass = document.getElementById('newPassword').value;
+      var confirm = document.getElementById('confirmPassword').value;
+
+      if (!current || !newPass || !confirm) {
+        showToastNotification('Please fill in all password fields', 'error');
+        return;
+      }
+
+      if (newPass !== confirm) {
+        showToastNotification('New passwords do not match', 'error');
+        return;
+      }
+
+      if (newPass.length < 8) {
+        showToastNotification('Password must be at least 8 characters', 'error');
+        return;
+      }
+
+      window.apiFetch('/admin/auth/password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: current, newPassword: newPass })
+      })
+        .then(function (res) {
+          return res.json().then(function (body) {
+            return { ok: res.ok, body: body };
+          });
+        })
+        .then(function (x) {
+          if (!x.ok) throw new Error(x.body.message || 'Could not update password');
+          showSuccess('passwordSuccess', 'Password changed successfully!');
+          showToastNotification('Password updated');
+          document.getElementById('currentPassword').value = '';
+          document.getElementById('newPassword').value = '';
+          document.getElementById('confirmPassword').value = '';
+        })
+        .catch(function (err) {
+          showToastNotification(err.message || 'Could not update password', 'error');
+        });
+    }
+
+    // Toggle 2FA
+    function toggle2FA() {
+      var enabled = document.getElementById('twoFactor').checked;
+      localStorage.setItem('admin2FA', enabled);
+      showToastNotification(enabled ? '2FA enabled' : '2FA disabled');
+    }
+
+    // Log out all sessions
+    function logoutAllSessions() {
+      if (confirm('This will log you out of all other devices. Continue?')) {
+        showToastNotification('Logged out of all other sessions');
+      }
+    }
+
+    // Delete all data
+    function deleteAllData() {
+      if (confirm('Are you sure you want to delete all data? This action cannot be undone.')) {
+        if (confirm('This will permanently delete all products, stores, categories, and price data. Are you absolutely sure?')) {
+          localStorage.removeItem('adminStores');
+          localStorage.removeItem('adminProducts');
+          localStorage.removeItem('adminCategories');
+          localStorage.removeItem('adminPrices');
+          showToastNotification('All data deleted');
+        }
+      }
+    }
+
+    // Export data
+    function exportData() {
+      var data = {
+        stores: JSON.parse(localStorage.getItem('adminStores') || '[]'),
+        products: JSON.parse(localStorage.getItem('adminProducts') || '[]'),
+        categories: JSON.parse(localStorage.getItem('adminCategories') || '[]'),
+        prices: JSON.parse(localStorage.getItem('adminPrices') || '[]'),
+        settings: {
+          name: localStorage.getItem('adminName'),
+          email: localStorage.getItem('adminEmail'),
+          theme: localStorage.getItem('adminTheme'),
+          language: localStorage.getItem('adminLanguage')
+        }
+      };
+      
+      var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'grocerytracker-export-' + new Date().toISOString().split('T')[0] + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      showToastNotification('Data exported successfully');
+    }
+
+    // Delete account
+    function deleteAccount() {
+      if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        if (confirm('All your data will be permanently deleted. Type "DELETE" to confirm.')) {
+          var confirmText = prompt('Type DELETE to confirm:');
+          if (confirmText === 'DELETE') {
+            localStorage.clear();
+            alert('Account deleted successfully.');
+            window.location.href = '../user/login.html';
+          }
+        }
+      }
+    }
+
+    // Load saved settings
+    function loadSettings() {
+      // Profile
+      var savedEmail = localStorage.getItem('adminEmail');
+      var savedPhone = localStorage.getItem('adminPhone');
+      var savedBio = localStorage.getItem('adminBio');
+      
+      if (savedEmail) document.getElementById('email').value = savedEmail;
+      if (savedPhone) document.getElementById('phone').value = savedPhone;
+      if (savedBio) document.getElementById('bio').value = savedBio;
+
+      var savedName = localStorage.getItem('adminName');
+      if (savedName) {
+        var parts = savedName.split(' ');
+        document.getElementById('firstName').value = parts[0] || '';
+        document.getElementById('lastName').value = parts.slice(1).join(' ') || '';
+      }
+
+      // Account
+      var savedLanguage = localStorage.getItem('adminLanguage');
+      var savedTimezone = localStorage.getItem('adminTimezone');
+      var savedCurrency = localStorage.getItem('adminCurrency');
+      var savedDateFormat = localStorage.getItem('adminDateFormat');
+      
+      if (savedLanguage) document.getElementById('language').value = savedLanguage;
+      if (savedTimezone) document.getElementById('timezone').value = savedTimezone;
+      if (savedCurrency) document.getElementById('currency').value = savedCurrency;
+      if (savedDateFormat) document.getElementById('dateFormat').value = savedDateFormat;
+
+      // Notifications
+      var savedNotifications = JSON.parse(localStorage.getItem('adminNotifications') || '{}');
+      document.getElementById('notifyMessages').checked = savedNotifications.messages !== false;
+      document.getElementById('notifyPriceAlerts').checked = savedNotifications.priceAlerts !== false;
+      document.getElementById('notifyWeeklyReports').checked = savedNotifications.weeklyReports || false;
+      document.getElementById('notifyMarketing').checked = savedNotifications.marketing || false;
+      document.getElementById('notifyNewStore').checked = savedNotifications.newStore || false;
+      document.getElementById('notifyLowStock').checked = savedNotifications.lowStock || false;
+      document.getElementById('pushEnabled').checked = savedNotifications.pushEnabled || false;
+      document.getElementById('notifySound').checked = savedNotifications.sound !== false;
+
+      // Appearance
+      var savedCompact = localStorage.getItem('adminCompactMode') === 'true';
+      var savedSidebarCollapsed = localStorage.getItem('adminSidebarCollapsed') === 'true';
+      var savedAnimations = localStorage.getItem('adminAnimations') !== 'false';
+      
+      document.getElementById('compactMode').checked = savedCompact;
+      document.getElementById('sidebarCollapsed').checked = savedSidebarCollapsed;
+      document.getElementById('animations').checked = savedAnimations;
+      
+      if (savedCompact) document.documentElement.classList.add('compact');
+      if (savedSidebarCollapsed) {
+        document.getElementById('sidebar').classList.add('collapsed');
+        document.getElementById('mainContent').classList.add('sidebar-collapsed');
+      }
+
+      // Security
+      var saved2FA = localStorage.getItem('admin2FA') === 'true';
+      document.getElementById('twoFactor').checked = saved2FA;
+    }
+
+    // Initialize
+    loadSettings();
+    initializeTheme();
+    initializeAccentColor();
+  </script>
+</body>
+</html>

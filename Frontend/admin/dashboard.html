@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - GroceryTracker</title>
+  <meta name="description" content="Admin dashboard for managing GroceryTracker products, stores, and settings.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #22c55e;
+      --primary-dark: #16a34a;
+      --primary-light: #dcfce7;
+      --background: #f0fdf4;
+      --foreground: #14532d;
+      --card: #ffffff;
+      --card-foreground: #14532d;
+      --muted: #f0fdf4;
+      --muted-foreground: #4b5563;
+      --border: #d1fae5;
+      --radius: 0.75rem;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --orange: #f97316;
+      --sidebar-width: 260px;
+      --sidebar-width-collapsed: 70px;
+    }
+
+    html.dark {
+      --background: #0f172a;
+      --foreground: #f1f5f9;
+      --card: #1e293b;
+      --card-foreground: #f1f5f9;
+      --muted: #1e293b;
+      --muted-foreground: #94a3b8;
+      --border: #334155;
+      --primary-light: #14532d;
+    }
+
+    html.compact {
+      font-size: 14px;
+    }
+
+    html.compact .dashboard-content {
+      padding: 1rem;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .admin-layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--foreground);
+      color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform 0.3s, width 0.3s;
+    }
+
+    html.dark .sidebar {
+      background: #0c1222;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-width-collapsed);
+    }
+
+    .sidebar.collapsed .sidebar-logo span,
+    .sidebar.collapsed .sidebar-badge,
+    .sidebar.collapsed .nav-section-title,
+    .sidebar.collapsed .nav-link span,
+    .sidebar.collapsed .nav-link-badge,
+    .sidebar.collapsed .user-details,
+    .sidebar.collapsed .photo-upload-btn {
+      display: none;
+    }
+
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+      padding: 0.75rem;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+      padding: 1rem;
+    }
+
+    .sidebar.collapsed .sidebar-logo {
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .user-info {
+      justify-content: center;
+    }
+
+    .sidebar-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+    .sidebar-logo { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; }
+
+    .sidebar-logo-icon {
+      width: 2.25rem;
+      height: 2.25rem;
+      background: var(--primary);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: var(--primary);
+      color: white;
+      border-radius: 0.25rem;
+      font-size: 0.625rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-nav { padding: 1rem 0; }
+    .nav-section { padding: 0 1rem; margin-bottom: 1.5rem; }
+
+    .nav-section-title {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4);
+      padding: 0 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      color: rgba(255,255,255,0.7);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: var(--primary); color: white; }
+
+    .nav-link-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.2);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+    }
+
+    .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
+    .user-info { display: flex; align-items: center; gap: 0.75rem; }
+
+    .user-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+      overflow: hidden;
+    }
+
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .user-details { flex: 1; }
+    .user-name { font-weight: 600; font-size: 0.875rem; }
+    .user-role { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+
+    .main-content { 
+      flex: 1; 
+      margin-left: var(--sidebar-width); 
+      min-height: 100vh;
+      transition: margin-left 0.3s;
+    }
+
+    .main-content.sidebar-collapsed {
+      margin-left: var(--sidebar-width-collapsed);
+    }
+
+    .admin-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+
+    .mobile-menu-btn {
+      display: none;
+      padding: 0.5rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--foreground);
+    }
+
+    .page-title { font-size: 1.25rem; font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+
+    .header-btn {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-foreground);
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .header-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    .notification-dot {
+      position: absolute;
+      top: 0.25rem;
+      right: 0.25rem;
+      width: 0.5rem;
+      height: 0.5rem;
+      background: var(--red);
+      border-radius: 50%;
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    .dashboard-content { padding: 2rem; transition: padding 0.3s; }
+
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: 1rem;
+      padding: 2rem;
+      color: white;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .welcome-text h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .welcome-text p { opacity: 0.9; }
+    .welcome-actions { display: flex; gap: 0.75rem; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-white { background: white; color: var(--foreground); }
+    .btn-white:hover { background: var(--muted); }
+    .btn-outline-white { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3); }
+    .btn-outline-white:hover { background: rgba(255,255,255,0.1); }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .stats-grid { display: grid; gap: 1.5rem; margin-bottom: 2rem; }
+    @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.1); }
+
+    html.dark .stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+    .stat-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+
+    .stat-icon {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-icon.green { background: var(--primary-light); color: var(--primary); }
+    .stat-icon.blue { background: #dbeafe; color: var(--blue); }
+    .stat-icon.yellow { background: #fef3c7; color: var(--yellow); }
+    .stat-icon.red { background: #fef2f2; color: var(--red); }
+
+    .stat-change { font-size: 0.75rem; font-weight: 500; padding: 0.25rem 0.5rem; border-radius: 9999px; }
+    .stat-change.positive { background: var(--primary-light); color: var(--primary-dark); }
+    .stat-change.negative { background: #fef2f2; color: var(--red); }
+
+    .stat-value { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--card-foreground); }
+    .stat-label { font-size: 0.875rem; color: var(--muted-foreground); }
+
+    /* Advanced Chart Section */
+    .charts-section { margin-bottom: 2rem; }
+
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: background-color 0.3s, border-color 0.3s;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+    .card-title { font-size: 1.125rem; font-weight: 600; color: var(--card-foreground); }
+    .card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    .chart-container { height: 400px; position: relative; }
+
+    .chart-select {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      background: var(--card);
+      color: var(--card-foreground);
+      cursor: pointer;
+    }
+
+    .chart-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Category Pills */
+    .category-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .category-pill {
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted-foreground);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .category-pill:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .category-pill.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Price Stats Grid */
+    .price-stats-grid {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    @media (min-width: 640px) { .price-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .price-stats-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .price-stat-card {
+      background: var(--muted);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+
+    .price-stat-label {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      margin-bottom: 0.25rem;
+    }
+
+    .price-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--card-foreground);
+    }
+
+    .price-stat-value.green { color: var(--primary); }
+    .price-stat-value.red { color: var(--red); }
+
+    .price-stat-note {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      margin-top: 0.25rem;
+    }
+
+    /* Secondary Charts Grid */
+    .charts-grid { display: grid; gap: 1.5rem; margin-bottom: 2rem; }
+    @media (min-width: 1024px) { .charts-grid { grid-template-columns: 1fr 1fr; } }
+
+    .activity-list { display: flex; flex-direction: column; }
+
+    .activity-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+
+    .activity-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .activity-icon.green { background: var(--primary-light); color: var(--primary); }
+    .activity-icon.blue { background: #dbeafe; color: var(--blue); }
+    .activity-icon.yellow { background: #fef3c7; color: var(--yellow); }
+
+    .activity-content { flex: 1; }
+    .activity-title { font-weight: 500; font-size: 0.875rem; margin-bottom: 0.125rem; color: var(--card-foreground); }
+    .activity-time { font-size: 0.75rem; color: var(--muted-foreground); }
+
+    .tables-grid { display: grid; gap: 1.5rem; }
+    @media (min-width: 1024px) { .tables-grid { grid-template-columns: 1fr 1fr; } }
+
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .table-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-title { font-weight: 600; color: var(--card-foreground); }
+    .view-all-link { font-size: 0.875rem; color: var(--primary); font-weight: 500; }
+    .view-all-link:hover { text-decoration: underline; }
+
+    .data-table { width: 100%; border-collapse: collapse; }
+
+    .data-table th,
+    .data-table td {
+      padding: 0.875rem 1.5rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table th {
+      background: var(--muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--muted); }
+
+    .product-cell { display: flex; align-items: center; gap: 0.75rem; }
+
+    .product-img {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.5rem;
+      object-fit: cover;
+      background: var(--muted);
+    }
+
+    .product-name { font-weight: 500; color: var(--card-foreground); }
+    .product-category { font-size: 0.75rem; color: var(--muted-foreground); }
+
+    .status-badge {
+      display: inline-flex;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .status-badge.active { background: var(--primary-light); color: var(--primary-dark); }
+    .status-badge.pending { background: #fef3c7; color: var(--yellow); }
+    .status-badge.inactive { background: #f3f4f6; color: var(--muted-foreground); }
+
+    html.dark .status-badge.inactive { background: #374151; }
+
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0 !important; }
+      .mobile-menu-btn { display: flex; }
+      .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+      .sidebar-overlay.open { display: block; }
+    }
+
+    .icon { width: 1.25rem; height: 1.25rem; }
+    .icon-lg { width: 1.5rem; height: 1.5rem; }
+
+    .photo-upload-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: var(--radius);
+      color: white;
+      cursor: pointer;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .photo-upload-btn:hover { background: rgba(255,255,255,0.2); }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 1rem 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      z-index: 1000;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.show {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--primary);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <span>GroceryTracker</span>
+        </a>
+        <span class="sidebar-badge">Admin Panel</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+          <a href="dashboard.html" class="nav-link active">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            <span>Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Management</div>
+          <a href="products.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <span>Products</span>
+            <span class="nav-link-badge">53</span>
+          </a>
+          <a href="stores.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            <span>Stores</span>
+            <span class="nav-link-badge">15</span>
+          </a>
+          <a href="categories.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            <span>Categories</span>
+          </a>
+          <a href="prices.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Price Updates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Communication</div>
+          <a href="messages.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <span>Messages</span>
+            <span class="nav-link-badge">6</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">System</div>
+          <a href="settings.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Admin User</div>
+            <div class="user-role">Administrator</div>
+          </div>
+        </div>
+        <label class="photo-upload-btn">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span>Change Photo</span>
+          <input type="file" accept="image/*" style="display: none;" onchange="uploadPhoto(event)">
+        </label>
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <header class="admin-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <h1 class="page-title">Dashboard</h1>
+        </div>
+        <div class="header-right">
+          <button class="header-btn" aria-label="Notifications" onclick="goToMessages()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span class="notification-dot"></span>
+          </button>
+          <button class="logout-btn" onclick="logout()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <div class="welcome-banner">
+          <div class="welcome-text">
+            <h2>Welcome back, <span id="welcomeName">Admin</span>!</h2>
+            <p>Here is what is happening with your grocery tracker today.</p>
+          </div>
+          <div class="welcome-actions">
+            <a href="products.html" class="btn btn-white">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              </svg>
+              Add Product
+            </a>
+            <a href="prices.html" class="btn btn-outline-white">Update Prices</a>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon green">
+                <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="dashStatProducts">—</div>
+            <div class="stat-label">Total Products</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon blue">
+                <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="dashStatStores">—</div>
+            <div class="stat-label">Active Stores</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon yellow">
+                <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" id="dashStatCategories">—</div>
+            <div class="stat-label">Categories</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon red">
+                <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <span class="stat-change negative" id="dashStatMessagesHint"></span>
+            </div>
+            <div class="stat-value" id="dashStatMessages">—</div>
+            <div class="stat-label">Messages</div>
+          </div>
+        </div>
+
+        <!-- Advanced Price Analytics Chart -->
+        <div class="charts-section">
+          <div class="chart-card">
+            <div class="card-header">
+              <h3 class="card-title">Price by store (current prices)</h3>
+              <div class="card-actions">
+                <select id="productSelect" class="chart-select" onchange="updateAdvancedChart()">
+                  <!-- Populated by JavaScript -->
+                </select>
+                <select id="chartPeriod" class="chart-select" onchange="updateAdvancedChart()">
+                  <option value="7">Last 7 days</option>
+                  <option value="30" selected>Last 30 days</option>
+                  <option value="90">Last 3 months</option>
+                  <option value="365">Last year</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Category Pills -->
+            <div class="category-pills" id="categoryPills">
+              <button class="category-pill active" data-category="All">All Categories</button>
+              <button class="category-pill" data-category="Fruits">Fruits</button>
+              <button class="category-pill" data-category="Vegetables">Vegetables</button>
+              <button class="category-pill" data-category="Dairy">Dairy</button>
+              <button class="category-pill" data-category="Bakery">Bakery</button>
+              <button class="category-pill" data-category="Grains">Grains</button>
+              <button class="category-pill" data-category="DryFruits">Dry Fruits</button>
+              <button class="category-pill" data-category="Washing">Washing</button>
+            </div>
+
+            <div class="chart-container">
+              <canvas id="priceChart"></canvas>
+            </div>
+
+            <!-- Price Stats -->
+            <div class="price-stats-grid">
+              <div class="price-stat-card">
+                <div class="price-stat-label">Current Average</div>
+                <div class="price-stat-value" id="currentAvg">Rs. 180</div>
+                <div class="price-stat-note" id="avgChange">-5% from last month</div>
+              </div>
+              <div class="price-stat-card">
+                <div class="price-stat-label">Lowest Price</div>
+                <div class="price-stat-value green" id="lowestPrice">Rs. 165</div>
+                <div class="price-stat-note" id="lowestStore">at D-Mart</div>
+              </div>
+              <div class="price-stat-card">
+                <div class="price-stat-label">Highest Price</div>
+                <div class="price-stat-value red" id="highestPrice">Rs. 210</div>
+                <div class="price-stat-note" id="highestStore">at Nature's Basket</div>
+              </div>
+              <div class="price-stat-card">
+                <div class="price-stat-label">Best Time to Buy</div>
+                <div class="price-stat-value" id="bestTime">—</div>
+                <div class="price-stat-note" id="bestTimeNote">No historical series yet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="card-header">
+              <h3 class="card-title">Category Distribution</h3>
+            </div>
+            <div class="chart-container" style="height: 250px;">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="card-header">
+              <h3 class="card-title">Recent Activity</h3>
+            </div>
+            <div class="activity-list" id="activityList">
+              <!-- Populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <div class="tables-grid">
+          <div class="table-card">
+            <div class="table-header">
+              <h3 class="table-title">Top Products</h3>
+              <a href="products.html" class="view-all-link">View All</a>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="topProductsTable">
+                <!-- Populated by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-card">
+            <div class="table-header">
+              <h3 class="table-title">Recent Messages</h3>
+              <a href="messages.html" class="view-all-link">View All</a>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>From</th>
+                  <th>Subject</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recentMessagesTable">
+                <!-- Populated by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span id="toastMessage">Settings saved!</span>
+  </div>
+
+  <script src="../js/api-base.js"></script>
+  <script>
+    // ==========================================
+    // SETTINGS SYNC - Apply settings from localStorage
+    // ==========================================
+    function goToMessages() {
+  window.location.href = "messages.html";
+}
+    function applySettings() {
+      // Apply theme
+      var savedTheme = localStorage.getItem('adminTheme') || 'light';
+      if (savedTheme === 'system') {
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', prefersDark);
+      } else if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
+      // Apply compact mode
+      var isCompact = localStorage.getItem('adminCompactMode') === 'true';
+      document.documentElement.classList.toggle('compact', isCompact);
+
+      // Apply sidebar collapsed
+      var isCollapsed = localStorage.getItem('adminSidebarCollapsed') === 'true';
+      document.getElementById('sidebar').classList.toggle('collapsed', isCollapsed);
+      document.getElementById('mainContent').classList.toggle('sidebar-collapsed', isCollapsed);
+
+      // Apply accent color
+      var savedColor = localStorage.getItem('adminAccentColor') || 'green';
+      var colors = {
+        green: { primary: '#22c55e', primaryDark: '#16a34a', primaryLight: '#dcfce7' },
+        blue: { primary: '#3b82f6', primaryDark: '#2563eb', primaryLight: '#dbeafe' },
+        purple: { primary: '#8b5cf6', primaryDark: '#7c3aed', primaryLight: '#ede9fe' },
+        orange: { primary: '#f59e0b', primaryDark: '#d97706', primaryLight: '#fef3c7' },
+        red: { primary: '#ef4444', primaryDark: '#dc2626', primaryLight: '#fee2e2' }
+      };
+      if (colors[savedColor]) {
+        document.documentElement.style.setProperty('--primary', colors[savedColor].primary);
+        document.documentElement.style.setProperty('--primary-dark', colors[savedColor].primaryDark);
+        document.documentElement.style.setProperty('--primary-light', colors[savedColor].primaryLight);
+      }
+    }
+
+    // Apply settings immediately
+    applySettings();
+
+    if (!localStorage.getItem('adminToken')) {
+      window.location.href = '../user/login.html';
+    }
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      if (localStorage.getItem('adminTheme') === 'system') {
+        document.documentElement.classList.toggle('dark', e.matches);
+      }
+    });
+
+    // Listen for storage changes (when settings are changed in another tab)
+    window.addEventListener('storage', function(e) {
+      if (e.key && e.key.startsWith('admin')) {
+        applySettings();
+      }
+    });
+
+    // ==========================================
+    // PRODUCTS + STORES (loaded from API)
+    // ==========================================
+    var API_BASE = window.API_BASE || ('http://' + location.hostname + ':5000/api');
+    var products = {};
+    var stores = [];
+
+    function dashCatKey(name) {
+      return String(name || '').replace(/\s+/g, '');
+    }
+
+    function loadDashboardProducts() {
+      var get = window.apiGetJson || function (path) {
+        return window.apiFetch(path, { method: 'GET' }).then(function (res) { return res.json(); });
+      };
+      return Promise.all([
+        get('/admin/products?limit=500'),
+        get('/admin/stores?limit=200'),
+        get('/admin/summary'),
+        get('/admin/messages?limit=3')
+      ]).then(function (results) {
+        var pdata = results[0];
+        var sdata = results[1];
+        var summ = results[2];
+        var mdata = results[3];
+        products = {};
+        (pdata.items || []).forEach(function (p) {
+          var ck = dashCatKey(p.category && p.category.name);
+          if (!products[ck]) products[ck] = {};
+          products[ck][p.name] = {
+            price: p.price,
+            image: p.image || '',
+            id: p._id,
+            status: p.status || 'active'
+          };
+        });
+        stores = (sdata.items || []).map(function (s) { return s.name; });
+
+        var elP = document.getElementById('dashStatProducts');
+        var elS = document.getElementById('dashStatStores');
+        var elC = document.getElementById('dashStatCategories');
+        var elM = document.getElementById('dashStatMessages');
+        var elH = document.getElementById('dashStatMessagesHint');
+        if (elP) elP.textContent = summ.productCount != null ? summ.productCount : '0';
+        if (elS) elS.textContent = summ.storeCount != null ? summ.storeCount : '0';
+        if (elC) elC.textContent = summ.categoryCount != null ? summ.categoryCount : '0';
+        if (elM) elM.textContent = summ.messageCount != null ? summ.messageCount : '0';
+        if (elH) {
+          var unread = summ.unreadMessageCount != null ? summ.unreadMessageCount : 0;
+          elH.textContent = unread > 0 ? String(unread) + ' new' : '';
+        }
+
+        messages = (mdata.items || []).map(function (m) {
+          return {
+            name: m.name,
+            subject: m.subject,
+            status: m.status
+          };
+        });
+      });
+    }
+
+    var storeColors = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444'];
+
+    var messages = [];
+
+    // Recent Activity
+    var activities = [
+      { type: 'product', title: 'New product added: Almonds (1kg)', time: '2 hours ago', icon: 'green' },
+      { type: 'price', title: 'Price updated: Tomato at D-Mart - Rs. 40', time: '4 hours ago', icon: 'blue' },
+      { type: 'message', title: 'New message from Rahul Sharma', time: '6 hours ago', icon: 'yellow' },
+      { type: 'store', title: 'Store added: Heritage Fresh', time: '1 day ago', icon: 'green' }
+    ];
+
+    var currentCategory = 'All';
+    var priceChart = null;
+    var categoryChart = null;
+
+    // Set user info
+    var userName = localStorage.getItem('adminName') || 'Admin';
+    var userPhoto = localStorage.getItem('adminAvatar');
+    document.getElementById('userName').textContent = userName;
+    document.getElementById('welcomeName').textContent = userName.split(' ')[0];
+    
+    var avatarEl = document.getElementById('userAvatar');
+    if (userPhoto) {
+      avatarEl.innerHTML = '<img src="' + userPhoto + '" alt="Admin">';
+    } else {
+      avatarEl.textContent = userName.charAt(0).toUpperCase();
+    }
+
+    // Sidebar toggle
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+
+    // Logout
+    function logout() {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminId');
+      localStorage.removeItem('adminLoggedIn');
+      localStorage.removeItem('adminEmail');
+      localStorage.removeItem('adminName');
+      window.location.href = '../user/login.html';
+    }
+
+    // Upload Photo
+    function uploadPhoto(event) {
+      var file = event.target.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var photoData = e.target.result;
+          localStorage.setItem('adminAvatar', photoData);
+          document.getElementById('userAvatar').innerHTML = '<img src="' + photoData + '" alt="Admin">';
+          showToast('Photo uploaded successfully!');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Generate price data with variation
+    function generatePriceData(basePrice, dataPoints, variation) {
+      var data = [];
+      for (var i = 0; i < dataPoints; i++) {
+        var randomVariation = 1 + (Math.random() - 0.5) * variation;
+        data.push(Math.round(basePrice * randomVariation));
+      }
+      return data;
+    }
+
+    // Generate labels based on period
+    function generateLabels(period) {
+      var labels = [];
+      var p = parseInt(period);
+      
+      if (p === 7) {
+        var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        var today = new Date().getDay();
+        for (var i = 6; i >= 0; i--) {
+          labels.push(days[(today - i + 7) % 7]);
+        }
+      } else if (p === 30) {
+        for (var i = 1; i <= 10; i++) {
+          labels.push('Day ' + (i * 3));
+        }
+      } else if (p === 90) {
+        var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        var today = new Date();
+        for (var i = 2; i >= 0; i--) {
+          var monthIndex = (today.getMonth() - i + 12) % 12;
+          labels.push(months[monthIndex]);
+        }
+        // Add weeks
+        for (var i = 0; i < 6; i++) {
+          labels.push('Week ' + (i + 1));
+        }
+        return labels.slice(0, 9);
+      } else if (p === 365) {
+        return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      }
+      
+      return labels;
+    }
+
+    // Populate product dropdown
+    function populateProducts(category) {
+      var select = document.getElementById('productSelect');
+      select.innerHTML = '';
+      
+      var productList = [];
+      
+      if (category === 'All') {
+        // Add all products from all categories
+        for (var cat in products) {
+          for (var name in products[cat]) {
+            productList.push({ name: name, category: cat });
+          }
+        }
+      } else if (products[category]) {
+        for (var name in products[category]) {
+          productList.push({ name: name, category: category });
+        }
+      }
+      
+      productList.forEach(function(item) {
+        var option = document.createElement('option');
+        option.value = item.category + '|' + item.name;
+        option.textContent = item.name + ' (' + item.category + ')';
+        select.appendChild(option);
+      });
+    }
+
+    // Update advanced chart (per-store prices from admin API)
+    function updateAdvancedChart() {
+      var selectedValue = document.getElementById('productSelect').value;
+      var period = document.getElementById('chartPeriod').value;
+      var get = window.apiGetJson || function (path) {
+        return window.apiFetch(path, { method: 'GET' }).then(function (res) { return res.json(); });
+      };
+
+      if (!selectedValue) return;
+
+      var parts = selectedValue.split('|');
+      var category = parts[0];
+      var productName = parts[1];
+
+      if (!products[category] || !products[category][productName]) return;
+
+      var productData = products[category][productName];
+      var pid = productData.id;
+      if (!pid) return;
+
+      var labels = generateLabels(period);
+      var dataPointCount = labels.length;
+
+      get('/admin/products/' + pid + '/store-prices')
+        .then(function (sp) {
+          var rows = (sp.entries || []).filter(function (r) { return r.price != null && r.price >= 0; }).slice(0, 8);
+          if (!rows.length) {
+            document.getElementById('avgChange').textContent = 'Add store prices in Products';
+            if (priceChart) {
+              priceChart.destroy();
+              priceChart = null;
+            }
+            return;
+          }
+
+          var datasets = [];
+          for (var i = 0; i < rows.length; i++) {
+            var base = Number(rows[i].price) || 0;
+            var c = storeColors[i % storeColors.length];
+            datasets.push({
+              label: rows[i].storeName,
+              data: generatePriceData(base, dataPointCount, 0),
+              borderColor: c,
+              backgroundColor: c,
+              tension: 0,
+              fill: false,
+              pointRadius: 3,
+              pointHoverRadius: 5
+            });
+          }
+
+          var allPrices = [];
+          datasets.forEach(function (ds) {
+            allPrices = allPrices.concat(ds.data);
+          });
+
+          var avgPrice = Math.round(allPrices.reduce(function (a, b) { return a + b; }, 0) / allPrices.length);
+          var minPrice = Math.min.apply(null, allPrices);
+          var maxPrice = Math.max.apply(null, allPrices);
+
+          var lowestStoreIndex = 0;
+          var highestStoreIndex = 0;
+          var lowestStoreMin = Infinity;
+          var highestStoreMax = 0;
+
+          datasets.forEach(function (ds, idx) {
+            var storeMin = Math.min.apply(null, ds.data);
+            var storeMax = Math.max.apply(null, ds.data);
+            if (storeMin < lowestStoreMin) {
+              lowestStoreMin = storeMin;
+              lowestStoreIndex = idx;
+            }
+            if (storeMax > highestStoreMax) {
+              highestStoreMax = storeMax;
+              highestStoreIndex = idx;
+            }
+          });
+
+          var fm = typeof formatMoney === 'function' ? formatMoney : function (n) { return 'Rs. ' + n; };
+          document.getElementById('currentAvg').textContent = fm(avgPrice);
+          document.getElementById('lowestPrice').textContent = fm(minPrice);
+          document.getElementById('highestPrice').textContent = fm(maxPrice);
+          document.getElementById('lowestStore').textContent = 'at ' + datasets[lowestStoreIndex].label;
+          document.getElementById('highestStore').textContent = 'at ' + datasets[highestStoreIndex].label;
+
+          var ref = rows.reduce(function (s, r) { return s + Number(r.price); }, 0) / rows.length;
+          var spread = Math.max.apply(null, rows.map(function (r) { return Number(r.price); })) - Math.min.apply(null, rows.map(function (r) { return Number(r.price); }));
+          var pct = ref ? Math.round((spread / ref) * 100) : 0;
+          var changeEl = document.getElementById('avgChange');
+          changeEl.textContent = 'Spread ~' + pct + '% across stores (live prices)';
+          changeEl.style.color = pct < 10 ? 'var(--primary)' : 'var(--red)';
+
+          if (priceChart) {
+            priceChart.data.labels = labels;
+            priceChart.data.datasets = datasets;
+            priceChart.options.plugins.legend.display = datasets.length > 0;
+            priceChart.update();
+          } else {
+            var ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: datasets
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: datasets.length > 0,
+                    position: 'bottom'
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: false,
+                    ticks: {
+                      callback: function (value) {
+                        return typeof formatMoneyShort === 'function' ? formatMoneyShort(value) : ('Rs.' + value);
+                      }
+                    }
+                  }
+                },
+                interaction: {
+                  intersect: false,
+                  mode: 'index'
+                }
+              }
+            });
+          }
+        })
+        .catch(function () {
+          document.getElementById('avgChange').textContent = 'Could not load store prices';
+        });
+    }
+
+    // Category pill click handler
+    document.querySelectorAll('.category-pill').forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        document.querySelectorAll('.category-pill').forEach(function(p) { 
+          p.classList.remove('active'); 
+        });
+        this.classList.add('active');
+        currentCategory = this.dataset.category;
+        populateProducts(currentCategory);
+        updateAdvancedChart();
+      });
+    });
+
+    // Create category distribution chart
+    function createCategoryChart() {
+      if (categoryChart) {
+        categoryChart.destroy();
+        categoryChart = null;
+      }
+      var categoryData = [];
+      var categoryLabels = [];
+      var categoryColors = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899'];
+      
+      var idx = 0;
+      for (var cat in products) {
+        categoryLabels.push(cat);
+        categoryData.push(Object.keys(products[cat]).length);
+        idx++;
+      }
+      
+      var ctx = document.getElementById('categoryChart').getContext('2d');
+      categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: categoryLabels,
+          datasets: [{
+            data: categoryData,
+            backgroundColor: categoryColors.slice(0, categoryLabels.length),
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                usePointStyle: true,
+                padding: 15,
+                font: { size: 11 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Render Top Products Table
+    function renderTopProducts() {
+      var tbody = document.getElementById('topProductsTable');
+      var topProducts = [];
+      
+      // Get first 5 products from different categories
+      for (var cat in products) {
+        var items = Object.entries(products[cat]).slice(0, 1);
+        items.forEach(function(item) {
+          topProducts.push({
+            name: item[0],
+            category: cat,
+            price: item[1].price,
+            image: item[1].image,
+            status: item[1].status || 'active'
+          });
+        });
+      }
+      
+      tbody.innerHTML = topProducts.slice(0, 5).map(function(product) {
+        var img = product.image ? ('../' + product.image) : 'https://via.placeholder.com/40';
+        var st = product.status === 'active' ? 'active' : 'inactive';
+        var stLabel = product.status === 'active' ? 'Active' : 'Inactive';
+        return '<tr>' +
+          '<td>' +
+            '<div class="product-cell">' +
+              '<img src="' + img + '" alt="' + product.name + '" class="product-img" onerror="this.src=\'https://via.placeholder.com/40\'">' +
+              '<div>' +
+                '<div class="product-name">' + product.name + '</div>' +
+                '<div class="product-category">' + product.category + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+          '<td>' + (typeof formatMoney === 'function' ? formatMoney(product.price) : ('Rs. ' + product.price)) + '</td>' +
+          '<td><span class="status-badge ' + st + '">' + stLabel + '</span></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    // Render Recent Messages
+    function escapeDashHtml(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function renderRecentMessages() {
+      var tbody = document.getElementById('recentMessagesTable');
+      if (!messages.length) {
+        tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted-foreground);font-size:0.875rem;">No messages yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = messages.slice(0, 3).map(function(msg) {
+        var statusClass = msg.status === 'new' ? 'pending' : msg.status === 'replied' ? 'active' : 'inactive';
+        var sub = (msg.subject || '').length > 28 ? (msg.subject || '').substring(0, 28) + '…' : (msg.subject || '');
+        return '<tr>' +
+          '<td>' + escapeDashHtml(msg.name) + '</td>' +
+          '<td>' + escapeDashHtml(sub) + '</td>' +
+          '<td><span class="status-badge ' + statusClass + '">' + msg.status.charAt(0).toUpperCase() + msg.status.slice(1) + '</span></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    // Render Activity List
+    function renderActivityList() {
+      var list = document.getElementById('activityList');
+      list.innerHTML = activities.map(function(activity) {
+        var iconSvg = activity.type === 'product' ? 
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>' : 
+          activity.type === 'price' ? 
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>' :
+          activity.type === 'message' ? 
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>' :
+          '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5"/>';
+        
+        return '<div class="activity-item">' +
+          '<div class="activity-icon ' + activity.icon + '">' +
+            '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">' + iconSvg + '</svg>' +
+          '</div>' +
+          '<div class="activity-content">' +
+            '<div class="activity-title">' + activity.title + '</div>' +
+            '<div class="activity-time">' + activity.time + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // Toast notification
+    function showToast(message) {
+      var toast = document.getElementById('toast');
+      document.getElementById('toastMessage').textContent = message;
+      toast.className = 'toast show success';
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function refreshDashboardCharts() {
+      return loadDashboardProducts()
+        .then(function () {
+          populateProducts(currentCategory);
+          updateAdvancedChart();
+          createCategoryChart();
+          renderTopProducts();
+          renderRecentMessages();
+        });
+    }
+
+    // Reload chart when you return to this tab (e.g. after editing prices in Products)
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      refreshDashboardCharts().catch(function () {});
+    });
+
+    window.addEventListener('currencychange', function () {
+      if (typeof updateAdvancedChart === 'function') updateAdvancedChart();
+    });
+
+    // Initialize (load products/stores from API first)
+    loadDashboardProducts()
+      .then(function () {
+        populateProducts('All');
+        updateAdvancedChart();
+        createCategoryChart();
+        renderTopProducts();
+        renderRecentMessages();
+        renderActivityList();
+      })
+      .catch(function () {
+        showToast('Could not load dashboard data. Start backend (npm run dev).');
+      });
+  </script>
+</body>
+</html>

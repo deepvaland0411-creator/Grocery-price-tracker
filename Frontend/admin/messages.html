@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages - GroceryTracker Admin</title>
+  <meta name="description" content="Manage contact messages in GroceryTracker admin panel.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #22c55e;
+      --primary-dark: #16a34a;
+      --primary-light: #dcfce7;
+      --background: #f0fdf4;
+      --foreground: #14532d;
+      --card: #ffffff;
+      --card-foreground: #14532d;
+      --muted: #f0fdf4;
+      --muted-foreground: #4b5563;
+      --border: #d1fae5;
+      --radius: 0.75rem;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --sidebar-width: 260px;
+      --sidebar-width-collapsed: 70px;
+    }
+
+    html.dark {
+      --background: #0f172a;
+      --foreground: #f1f5f9;
+      --card: #1e293b;
+      --card-foreground: #f1f5f9;
+      --muted: #1e293b;
+      --muted-foreground: #94a3b8;
+      --border: #334155;
+      --primary-light: #14532d;
+    }
+
+    html.compact {
+      font-size: 14px;
+    }
+
+    html.compact .page-content {
+      padding: 1rem;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .admin-layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--foreground);
+      color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform 0.3s, width 0.3s;
+    }
+
+    html.dark .sidebar {
+      background: #0c1222;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-width-collapsed);
+    }
+
+    .sidebar.collapsed .sidebar-logo span,
+    .sidebar.collapsed .sidebar-badge,
+    .sidebar.collapsed .nav-section-title,
+    .sidebar.collapsed .nav-link span,
+    .sidebar.collapsed .nav-link-badge,
+    .sidebar.collapsed .user-details {
+      display: none;
+    }
+
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+      padding: 0.75rem;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+      padding: 1rem;
+    }
+
+    .sidebar.collapsed .sidebar-logo {
+      justify-content: center;
+    }
+
+    .sidebar.collapsed .user-info {
+      justify-content: center;
+    }
+
+    .sidebar-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-logo { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; font-size: 1.25rem; }
+
+    .sidebar-logo-icon {
+      width: 2.25rem;
+      height: 2.25rem;
+      background: var(--primary);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: var(--primary);
+      color: white;
+      border-radius: 0.25rem;
+      font-size: 0.625rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-nav { padding: 1rem 0; }
+    .nav-section { padding: 0 1rem; margin-bottom: 1.5rem; }
+
+    .nav-section-title {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4);
+      padding: 0 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      color: rgba(255,255,255,0.7);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: var(--primary); color: white; }
+
+    .nav-link-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.2);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+    }
+
+    .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
+    .user-info { display: flex; align-items: center; gap: 0.75rem; }
+
+    .user-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+      overflow: hidden;
+    }
+
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .user-details { flex: 1; }
+    .user-name { font-weight: 600; font-size: 0.875rem; }
+    .user-role { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+
+    .main-content { 
+      flex: 1; 
+      margin-left: var(--sidebar-width); 
+      min-height: 100vh;
+      transition: margin-left 0.3s;
+    }
+
+    .main-content.sidebar-collapsed {
+      margin-left: var(--sidebar-width-collapsed);
+    }
+
+    .admin-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+
+    .mobile-menu-btn {
+      display: none;
+      padding: 0.5rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--foreground);
+    }
+
+    .page-title { font-size: 1.25rem; font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    .page-content { padding: 2rem; transition: padding 0.3s; }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-header-text h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .page-header-text p { color: var(--muted-foreground); font-size: 0.875rem; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--foreground); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-danger { background: var(--red); color: white; }
+    .btn-danger:hover { background: #dc2626; }
+
+    .messages-layout { display: grid; gap: 1.5rem; }
+    @media (min-width: 1024px) { .messages-layout { grid-template-columns: 350px 1fr; } }
+
+    .messages-list-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .messages-list-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .messages-list-title { font-weight: 600; color: var(--card-foreground); }
+
+    .messages-count {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .messages-list { max-height: 600px; overflow-y: auto; }
+
+    .message-item {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .message-item:hover { background: var(--muted); }
+    .message-item.active { background: var(--primary-light); border-left: 3px solid var(--primary); }
+    .message-item.unread { background: #fefce8; }
+
+    html.dark .message-item.unread { background: #422006; }
+
+    .message-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .message-sender {
+      font-weight: 600;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--card-foreground);
+    }
+
+    .unread-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      background: var(--primary);
+      border-radius: 50%;
+    }
+
+    .message-time { font-size: 0.75rem; color: var(--muted-foreground); }
+    .message-subject { font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--card-foreground); }
+    .message-preview { font-size: 0.75rem; color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .message-detail-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    .message-detail-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .message-detail-subject {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--card-foreground);
+    }
+
+    .message-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+    .meta-item { display: flex; align-items: center; gap: 0.5rem; }
+    .meta-label { font-size: 0.75rem; color: var(--muted-foreground); }
+    .meta-value { font-size: 0.875rem; font-weight: 500; color: var(--card-foreground); }
+
+    .message-detail-body { padding: 1.5rem; }
+    .message-content { font-size: 0.9375rem; line-height: 1.8; color: var(--foreground); }
+
+    .message-detail-footer {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      padding: 3rem;
+      text-align: center;
+      color: var(--muted-foreground);
+    }
+
+    .empty-icon {
+      width: 4rem;
+      height: 4rem;
+      margin: 0 auto 1rem;
+      color: var(--border);
+    }
+
+    .empty-state h3 { font-size: 1.125rem; font-weight: 600; color: var(--foreground); margin-bottom: 0.5rem; }
+
+    .reply-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .reply-section h4 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--card-foreground); }
+
+    .form-group { margin-bottom: 1rem; }
+
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 120px;
+      background: var(--card);
+      color: var(--card-foreground);
+      transition: border-color 0.2s, background-color 0.3s;
+    }
+
+    .form-textarea:focus { outline: none; border-color: var(--primary); }
+
+    .status-badge {
+      display: inline-flex;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .status-badge.new { background: #fef3c7; color: var(--yellow); }
+    .status-badge.replied { background: var(--primary-light); color: var(--primary-dark); }
+    .status-badge.closed { background: #f3f4f6; color: var(--muted-foreground); }
+
+    html.dark .status-badge.closed { background: #374151; }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 1rem 1.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      z-index: 1000;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.show {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--primary);
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0 !important; }
+      .mobile-menu-btn { display: flex; }
+      .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+      .sidebar-overlay.open { display: block; }
+    }
+
+    .icon { width: 1.25rem; height: 1.25rem; }
+    .icon-lg { width: 1.5rem; height: 1.5rem; }
+    .icon-sm { width: 1rem; height: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <span>GroceryTracker</span>
+        </a>
+        <span class="sidebar-badge">Admin Panel</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+          <a href="dashboard.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            <span>Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Management</div>
+          <a href="products.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <span>Products</span>
+            <span class="nav-link-badge">53</span>
+          </a>
+          <a href="stores.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            <span>Stores</span>
+            <span class="nav-link-badge">15</span>
+          </a>
+          <a href="categories.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            <span>Categories</span>
+          </a>
+          <a href="prices.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Price Updates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Communication</div>
+          <a href="messages.html" class="nav-link active">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <span>Messages</span>
+            <span class="nav-link-badge" id="navBadge">6</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">System</div>
+          <a href="settings.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Admin User</div>
+            <div class="user-role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <header class="admin-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <h1 class="page-title">Messages</h1>
+        </div>
+        <div class="header-right">
+          <button class="logout-btn" onclick="logout()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="page-header">
+          <div class="page-header-text">
+            <h2>Contact Messages</h2>
+            <p>Manage and respond to customer inquiries</p>
+          </div>
+        </div>
+
+        <div class="messages-layout">
+          <div class="messages-list-card">
+            <div class="messages-list-header">
+              <span class="messages-list-title">Inbox</span>
+              <span class="messages-count" id="messagesCount">6 messages</span>
+            </div>
+            <div class="messages-list" id="messagesList">
+              <!-- Populated by JavaScript -->
+            </div>
+          </div>
+
+          <div class="message-detail-card" id="messageDetail">
+            <div class="empty-state">
+              <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              <h3>Select a message</h3>
+              <p>Choose a message from the list to view its details</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    </svg>
+    <span id="toastMessage">Settings saved!</span>
+  </div>
+
+  <script src="../js/api-base.js"></script>
+  <script>
+    // ==========================================
+    // SETTINGS SYNC - Apply settings from localStorage
+    // ==========================================
+    function applySettings() {
+      // Apply theme
+      var savedTheme = localStorage.getItem('adminTheme') || 'light';
+      if (savedTheme === 'system') {
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', prefersDark);
+      } else if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
+      // Apply compact mode
+      var isCompact = localStorage.getItem('adminCompactMode') === 'true';
+      document.documentElement.classList.toggle('compact', isCompact);
+
+      // Apply sidebar collapsed
+      var isCollapsed = localStorage.getItem('adminSidebarCollapsed') === 'true';
+      document.getElementById('sidebar').classList.toggle('collapsed', isCollapsed);
+      document.getElementById('mainContent').classList.toggle('sidebar-collapsed', isCollapsed);
+
+      // Apply accent color
+      var savedColor = localStorage.getItem('adminAccentColor') || 'green';
+      var colors = {
+        green: { primary: '#22c55e', primaryDark: '#16a34a', primaryLight: '#dcfce7' },
+        blue: { primary: '#3b82f6', primaryDark: '#2563eb', primaryLight: '#dbeafe' },
+        purple: { primary: '#8b5cf6', primaryDark: '#7c3aed', primaryLight: '#ede9fe' },
+        orange: { primary: '#f59e0b', primaryDark: '#d97706', primaryLight: '#fef3c7' },
+        red: { primary: '#ef4444', primaryDark: '#dc2626', primaryLight: '#fee2e2' }
+      };
+      if (colors[savedColor]) {
+        document.documentElement.style.setProperty('--primary', colors[savedColor].primary);
+        document.documentElement.style.setProperty('--primary-dark', colors[savedColor].primaryDark);
+        document.documentElement.style.setProperty('--primary-light', colors[savedColor].primaryLight);
+      }
+    }
+
+    // Apply settings immediately
+    applySettings();
+
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      if (localStorage.getItem('adminTheme') === 'system') {
+        document.documentElement.classList.toggle('dark', e.matches);
+      }
+    });
+
+    // Listen for storage changes (when settings are changed in another tab)
+    window.addEventListener('storage', function(e) {
+      if (e.key && e.key.startsWith('admin')) {
+        applySettings();
+      }
+    });
+
+    // ==========================================
+    // PAGE FUNCTIONALITY
+    // ==========================================
+
+    if (!localStorage.getItem('adminToken')) {
+      window.location.href = '../user/login.html';
+    }
+
+    var API_BASE = window.API_BASE || ('http://' + location.hostname + ':5000/api');
+    var messages = [];
+    var selectedMessage = null;
+
+    // Set user info
+    var userName = localStorage.getItem('adminName') || 'Admin';
+    var userPhoto = localStorage.getItem('adminAvatar');
+    document.getElementById('userName').textContent = userName;
+    
+    var avatarEl = document.getElementById('userAvatar');
+    if (userPhoto) {
+      avatarEl.innerHTML = '<img src="' + userPhoto + '" alt="Admin">';
+    } else {
+      avatarEl.textContent = userName.charAt(0).toUpperCase();
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function loadMessages() {
+      return window.apiFetch('/admin/messages?limit=100')
+        .then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok) throw new Error(body.message || 'Failed to load messages');
+            return body;
+          });
+        })
+        .then(function (data) {
+          messages = data.items || [];
+        });
+    }
+
+    // Sidebar toggle
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+
+    // Logout
+    function logout() {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminId');
+      localStorage.removeItem('adminLoggedIn');
+      localStorage.removeItem('adminEmail');
+      localStorage.removeItem('adminName');
+      window.location.href = '../user/login.html';
+    }
+
+    // Format date
+    function formatDate(dateStr) {
+      var date = new Date(dateStr);
+      var today = new Date();
+      var yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (date.toDateString() === today.toDateString()) {
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+      } else {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    }
+
+    function findMessage(id) {
+      var sid = String(id);
+      return messages.find(function (m) { return String(m.id) === sid; });
+    }
+
+    // Render Messages List
+    function renderMessagesList() {
+      var list = document.getElementById('messagesList');
+      list.innerHTML = '';
+
+      if (!messages.length) {
+        list.innerHTML = '<p style="padding:1rem;color:var(--muted-foreground);font-size:0.9rem;">No messages yet. They appear here when users submit the contact form.</p>';
+      }
+
+      messages.forEach(function (msg) {
+        var activeClass = selectedMessage && String(selectedMessage.id) === String(msg.id) ? ' active' : '';
+        var unreadClass = msg.unread ? ' unread' : '';
+        var prev = (msg.message || '').length > 80 ? escapeHtml((msg.message || '').substring(0, 80)) + '…' : escapeHtml(msg.message || '');
+
+        list.innerHTML += '<div class="message-item' + unreadClass + activeClass + '" data-mid="' + escapeHtml(msg.id) + '" onclick="selectMessage(\'' + String(msg.id).replace(/'/g, "\\'") + '\')">' +
+          '<div class="message-item-header">' +
+            '<span class="message-sender">' +
+              (msg.unread ? '<span class="unread-dot"></span>' : '') +
+              escapeHtml(msg.name) +
+            '</span>' +
+            '<span class="message-time">' + formatDate(msg.date) + '</span>' +
+          '</div>' +
+          '<div class="message-subject">' + escapeHtml(msg.subject) + '</div>' +
+          '<div class="message-preview">' + prev + '</div>' +
+        '</div>';
+      });
+
+      var unreadCount = messages.filter(function (m) { return m.unread; }).length;
+      document.getElementById('messagesCount').textContent = messages.length + ' messages' + (unreadCount > 0 ? ' (' + unreadCount + ' new)' : '');
+      var badge = document.getElementById('navBadge');
+      if (badge) badge.textContent = unreadCount > 0 ? String(unreadCount) : (messages.length ? String(messages.length) : '0');
+    }
+
+    // Select Message
+    function selectMessage(id) {
+      var msg = findMessage(id);
+      if (!msg) return;
+
+      selectedMessage = msg;
+
+      window.apiFetch('/admin/messages/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ read: true })
+      })
+        .then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok) throw new Error(body.message || 'Update failed');
+            return body;
+          });
+        })
+        .then(function (updated) {
+          var local = findMessage(id);
+          if (local) {
+            local.unread = updated.unread;
+            local.status = updated.status;
+            local.reply = updated.reply;
+          }
+          renderMessagesList();
+          renderMessageDetail(local || msg);
+        })
+        .catch(function () {
+          msg.unread = false;
+          renderMessagesList();
+          renderMessageDetail(msg);
+        });
+    }
+
+    // Render Message Detail
+    function renderMessageDetail(msg) {
+      var detail = document.getElementById('messageDetail');
+      var date = new Date(msg.date);
+      var bodyHtml = escapeHtml(msg.message || '').replace(/\n/g, '<br>');
+      var replyNote = (msg.reply && String(msg.reply).trim())
+        ? '<div class="form-group" style="margin-top:1rem;"><strong>Saved reply</strong><p style="white-space:pre-wrap;font-size:0.9rem;">' + escapeHtml(msg.reply) + '</p></div>'
+        : '';
+
+      detail.innerHTML = '<div class="message-detail-header">' +
+          '<h2 class="message-detail-subject">' + escapeHtml(msg.subject) + '</h2>' +
+          '<div class="message-meta">' +
+            '<div class="meta-item">' +
+              '<span class="meta-label">From:</span>' +
+              '<span class="meta-value">' + escapeHtml(msg.name) + ' &lt;' + escapeHtml(msg.email) + '&gt;</span>' +
+            '</div>' +
+            '<div class="meta-item">' +
+              '<span class="meta-label">Date:</span>' +
+              '<span class="meta-value">' + date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</span>' +
+            '</div>' +
+            '<div class="meta-item">' +
+              '<span class="meta-label">Status:</span>' +
+              '<span class="status-badge ' + msg.status + '">' + msg.status.charAt(0).toUpperCase() + msg.status.slice(1) + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="message-detail-body">' +
+          '<div class="message-content">' + bodyHtml + '</div>' +
+          replyNote +
+          '<div class="reply-section">' +
+            '<h4>Reply to this message</h4>' +
+            '<p style="font-size:0.8rem;color:var(--muted-foreground);margin-bottom:0.5rem;">Saves your reply here. If you set SMTP in <code style="font-size:0.75rem;">backend/.env</code>, the user also gets this reply by email.</p>' +
+            '<div class="form-group">' +
+              '<textarea class="form-textarea" id="replyText" placeholder="Type your reply here..."></textarea>' +
+            '</div>' +
+            '<button class="btn btn-primary" onclick="sendReply(\'' + String(msg.id).replace(/'/g, "\\'") + '\')">' +
+              '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>' +
+              '</svg>' +
+              'Save reply' +
+            '</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="message-detail-footer">' +
+          '<button class="btn btn-outline" onclick="markAs(\'' + String(msg.id).replace(/'/g, "\\'") + '\', \'replied\')">' +
+            '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+              '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>' +
+            '</svg>' +
+            'Mark as Replied' +
+          '</button>' +
+          '<button class="btn btn-outline" onclick="markAs(\'' + String(msg.id).replace(/'/g, "\\'") + '\', \'closed\')">' +
+            '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+              '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>' +
+            '</svg>' +
+            'Archive' +
+          '</button>' +
+          '<button class="btn btn-danger" onclick="deleteMessage(\'' + String(msg.id).replace(/'/g, "\\'") + '\')">' +
+            '<svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+              '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>' +
+            '</svg>' +
+            'Delete' +
+          '</button>' +
+        '</div>';
+      var ta = document.getElementById('replyText');
+      if (ta) ta.value = msg.reply || '';
+    }
+
+    // Send Reply
+    function sendReply(id) {
+      var replyTextEl = document.getElementById('replyText');
+      var replyText = replyTextEl ? replyTextEl.value : '';
+      if (!replyText.trim()) {
+        showToast('Please enter a reply message');
+        return;
+      }
+
+      window.apiFetch('/admin/messages/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reply: replyText.trim(), status: 'replied', read: true })
+      })
+        .then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok) throw new Error(body.message || 'Save failed');
+            return body;
+          });
+        })
+        .then(function (updated) {
+          var msg = findMessage(id);
+          if (msg) {
+            msg.status = updated.status;
+            msg.reply = updated.reply;
+            msg.unread = updated.unread;
+          }
+          renderMessagesList();
+          if (msg) renderMessageDetail(msg);
+          var note = 'Reply saved.';
+          if (updated.mailSent === true) {
+            note = 'Reply saved and emailed to ' + (msg ? msg.email : 'user') + '.';
+          } else if (updated.mailSent === false || updated.mailNotice === 'not_configured') {
+            note = 'Reply saved. Email not sent — configure SMTP in backend .env (see .env.example).';
+          } else if (updated.mailError) {
+            note = 'Reply saved, but email failed: ' + updated.mailError;
+          }
+          showToast(note);
+        })
+        .catch(function (err) {
+          showToast(err.message || 'Could not save reply');
+        });
+    }
+
+    // Mark As
+    function markAs(id, status) {
+      window.apiFetch('/admin/messages/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: status, read: true })
+      })
+        .then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok) throw new Error(body.message || 'Update failed');
+            return body;
+          });
+        })
+        .then(function (updated) {
+          var msg = findMessage(id);
+          if (msg) {
+            msg.status = updated.status;
+            msg.unread = updated.unread;
+          }
+          renderMessagesList();
+          if (msg) renderMessageDetail(msg);
+          showToast('Message marked as ' + status + '.');
+        })
+        .catch(function (err) {
+          showToast(err.message || 'Update failed');
+        });
+    }
+
+    // Delete Message
+    function deleteMessage(id) {
+      if (!confirm('Are you sure you want to delete this message?')) return;
+
+      window.apiFetch('/admin/messages/' + encodeURIComponent(id), { method: 'DELETE' })
+        .then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok) throw new Error(body.message || 'Delete failed');
+          });
+        })
+        .then(function () {
+          messages = messages.filter(function (m) { return String(m.id) !== String(id); });
+          selectedMessage = null;
+          renderMessagesList();
+          document.getElementById('messageDetail').innerHTML = '<div class="empty-state">' +
+            '<svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+              '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>' +
+            '</svg>' +
+            '<h3>Select a message</h3>' +
+            '<p>Choose a message from the list to view its details</p>' +
+          '</div>';
+          showToast('Message deleted.');
+        })
+        .catch(function (err) {
+          showToast(err.message || 'Delete failed');
+        });
+    }
+
+    // Toast notification
+    function showToast(message) {
+      var toast = document.getElementById('toast');
+      document.getElementById('toastMessage').textContent = message;
+      toast.className = 'toast show success';
+      setTimeout(function () {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    loadMessages()
+      .then(function () {
+        renderMessagesList();
+      })
+      .catch(function () {
+        document.getElementById('messagesList').innerHTML = '<p style="padding:1rem;color:#b91c1c;">Could not load messages. Start the backend (npm run dev) and refresh.</p>';
+        showToast('Could not load messages from server.');
+      });
+  </script>
+</body>
+</html>

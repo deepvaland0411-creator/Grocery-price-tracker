@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products Management - GroceryTracker Admin</title>
+  <meta name="description" content="Manage products in GroceryTracker admin panel.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #22c55e;
+      --primary-dark: #16a34a;
+      --primary-light: #dcfce7;
+      --background: #f0fdf4;
+      --foreground: #14532d;
+      --card: #ffffff;
+      --card-foreground: #14532d;
+      --muted: #f0fdf4;
+      --muted-foreground: #4b5563;
+      --border: #d1fae5;
+      --radius: 0.75rem;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --sidebar-width: 260px;
+      --sidebar-collapsed-width: 80px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    body.dark-mode {
+      --background: #0f172a;
+      --foreground: #f1f5f9;
+      --card: #1e293b;
+      --card-foreground: #f1f5f9;
+      --muted: #1e293b;
+      --muted-foreground: #94a3b8;
+      --border: #334155;
+      --primary-light: #14532d;
+    }
+
+    body.compact-mode { font-size: 14px; }
+    body.compact-mode .page-content { padding: 1rem; }
+    body.compact-mode .sidebar-header { padding: 1rem; }
+    body.compact-mode .nav-link { padding: 0.5rem 0.75rem; }
+    body.compact-mode .data-table th,
+    body.compact-mode .data-table td { padding: 0.75rem 1rem; }
+
+    body.sidebar-collapsed .sidebar { width: var(--sidebar-collapsed-width); }
+    body.sidebar-collapsed .sidebar-logo span,
+    body.sidebar-collapsed .sidebar-badge,
+    body.sidebar-collapsed .nav-section-title,
+    body.sidebar-collapsed .nav-link span,
+    body.sidebar-collapsed .nav-link-badge,
+    body.sidebar-collapsed .user-details { display: none; }
+    body.sidebar-collapsed .nav-link { justify-content: center; padding: 0.75rem; }
+    body.sidebar-collapsed .user-info { justify-content: center; }
+    body.sidebar-collapsed .main-content { margin-left: var(--sidebar-collapsed-width); }
+
+    a { color: inherit; text-decoration: none; }
+
+    .admin-layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--foreground);
+      color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: all 0.3s;
+    }
+
+    body.dark-mode .sidebar { background: #0f172a; border-right: 1px solid var(--border); }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .sidebar-logo-icon {
+      width: 2.25rem;
+      height: 2.25rem;
+      background: var(--primary);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: var(--primary);
+      color: white;
+      border-radius: 0.25rem;
+      font-size: 0.625rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sidebar-nav { padding: 1rem 0; }
+    .nav-section { padding: 0 1rem; margin-bottom: 1.5rem; }
+
+    .nav-section-title {
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.4);
+      padding: 0 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      color: rgba(255,255,255,0.7);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-link.active { background: var(--primary); color: white; }
+
+    .nav-link-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.2);
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+    }
+
+    .sidebar-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      margin-top: auto;
+    }
+
+    .user-info { display: flex; align-items: center; gap: 0.75rem; }
+
+    .user-avatar {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 1rem;
+      overflow: hidden;
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-details { flex: 1; }
+    .user-name { font-weight: 600; font-size: 0.875rem; }
+    .user-role { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      transition: margin-left 0.3s;
+    }
+
+    .admin-header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+
+    .mobile-menu-btn {
+      display: none;
+      padding: 0.5rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--foreground);
+    }
+
+    .page-title { font-size: 1.25rem; font-weight: 700; color: var(--foreground); }
+
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted-foreground);
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+    .page-content { padding: 2rem; }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-header-text h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      color: var(--foreground);
+    }
+
+    .page-header-text p {
+      color: var(--muted-foreground);
+      font-size: 0.875rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--foreground); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-danger { background: var(--red); color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+
+    .filters-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--card);
+      color: var(--foreground);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted-foreground);
+    }
+
+    .filter-select {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--card);
+      color: var(--foreground);
+      min-width: 150px;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 1rem 1.5rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table th {
+      background: var(--muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: var(--muted); }
+
+    .product-cell { display: flex; align-items: center; gap: 0.75rem; }
+
+    .product-img {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 0.5rem;
+      object-fit: cover;
+      background: var(--muted);
+    }
+
+    .product-name { font-weight: 500; color: var(--foreground); }
+    .product-category { font-size: 0.75rem; color: var(--muted-foreground); }
+
+    .status-badge {
+      display: inline-flex;
+      padding: 0.25rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .status-badge.active { background: var(--primary-light); color: var(--primary-dark); }
+    body.dark-mode .status-badge.active { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .status-badge.inactive { background: #f3f4f6; color: var(--muted-foreground); }
+    body.dark-mode .status-badge.inactive { background: #374151; color: #9ca3af; }
+
+    .actions-cell { display: flex; gap: 0.5rem; }
+
+    .action-btn {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background: var(--card);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted-foreground);
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .action-btn.delete:hover { border-color: var(--red); color: var(--red); }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      background: var(--card);
+    }
+
+    .pagination-info { font-size: 0.875rem; color: var(--muted-foreground); }
+
+    .pagination-btns { display: flex; gap: 0.5rem; }
+
+    .pagination-btn {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      color: var(--foreground);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .pagination-btn:hover { border-color: var(--primary); }
+    .pagination-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .pagination-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--foreground); }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--muted-foreground);
+      padding: 0.25rem;
+    }
+
+    .modal-close:hover { color: var(--foreground); }
+
+    .modal-body { padding: 1.5rem; }
+
+    .form-group { margin-bottom: 1.25rem; }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--foreground);
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--card);
+      color: var(--foreground);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .modal-footer {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      body.sidebar-collapsed .main-content { margin-left: 0; }
+      .mobile-menu-btn { display: flex; }
+      .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+      .sidebar-overlay.open { display: block; }
+    }
+
+    @media (max-width: 768px) {
+      .data-table thead { display: none; }
+      .data-table tr { display: block; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: var(--radius); }
+      .data-table td { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+      .data-table td::before { content: attr(data-label); font-weight: 600; color: var(--muted-foreground); font-size: 0.75rem; }
+      .data-table tr:hover td { background: var(--card); }
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    .icon { width: 1.25rem; height: 1.25rem; }
+    .icon-lg { width: 1.5rem; height: 1.5rem; }
+    .icon-sm { width: 1rem; height: 1rem; }
+
+    /* Accent Colors */
+    body.accent-blue { --primary: #3b82f6; --primary-dark: #2563eb; --primary-light: #dbeafe; }
+    body.accent-purple { --primary: #8b5cf6; --primary-dark: #7c3aed; --primary-light: #ede9fe; }
+    body.accent-orange { --primary: #f97316; --primary-dark: #ea580c; --primary-light: #ffedd5; }
+    body.accent-red { --primary: #ef4444; --primary-dark: #dc2626; --primary-light: #fee2e2; }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <a href="dashboard.html" class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <span>GroceryTracker</span>
+        </a>
+        <span class="sidebar-badge">Admin Panel</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Main</div>
+          <a href="dashboard.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            <span>Dashboard</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Management</div>
+          <a href="products.html" class="nav-link active">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <span>Products</span>
+            <span class="nav-link-badge" id="productCount">53</span>
+          </a>
+          <a href="stores.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            <span>Stores</span>
+            <span class="nav-link-badge">15</span>
+          </a>
+          <a href="categories.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            <span>Categories</span>
+          </a>
+          <a href="prices.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Price Updates</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Communication</div>
+          <a href="messages.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            <span>Messages</span>
+            <span class="nav-link-badge">6</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">System</div>
+          <a href="settings.html" class="nav-link">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Settings</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Admin User</div>
+            <div class="user-role">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="admin-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Toggle menu">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <h1 class="page-title">Products</h1>
+        </div>
+        <div class="header-right">
+          <button class="logout-btn" onclick="logout()">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <div class="page-content">
+        <div class="page-header">
+          <div class="page-header-text">
+            <h2>Manage Products</h2>
+            <p>Add, edit and manage all grocery products (53 products across 7 categories)</p>
+          </div>
+          <button class="btn btn-primary" onclick="openModal('add')">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Add Product
+          </button>
+        </div>
+
+        <div class="filters-bar">
+          <div class="search-box">
+            <svg class="icon search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" class="search-input" placeholder="Search products..." id="searchInput" oninput="filterProducts()">
+          </div>
+          <select class="filter-select" id="categoryFilter" onchange="filterProducts()">
+            <option value="">All Categories</option>
+            <option value="Fruits">Fruits</option>
+            <option value="Vegetables">Vegetables</option>
+            <option value="Dairy">Dairy</option>
+            <option value="Bakery">Bakery</option>
+            <option value="Grains">Grains</option>
+            <option value="DryFruits">Dry Fruits</option>
+            <option value="Washing">Washing Items</option>
+          </select>
+          <select class="filter-select" id="statusFilter" onchange="filterProducts()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Base Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+            </tbody>
+          </table>
+          <div class="pagination">
+            <div class="pagination-info">Showing <span id="showingCount">1-10</span> of <span id="totalCount">53</span> products</div>
+            <div class="pagination-btns" id="paginationBtns">
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="productModal">
+    <div class="modal" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Add New Product</h3>
+        <button class="modal-close" onclick="closeModal()">
+          <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="productForm" onsubmit="return saveProduct(event)">
+          <input type="hidden" id="productId">
+          <div class="form-group">
+            <label class="form-label" for="productName">Product Name</label>
+            <input type="text" id="productName" class="form-input" placeholder="e.g., Apple (1 kg)" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="productCategory">Category</label>
+              <select id="productCategory" class="form-select" required>
+                <option value="">Select Category</option>
+                <option value="Fruits">Fruits</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Bakery">Bakery</option>
+                <option value="Grains">Grains</option>
+                <option value="DryFruits">Dry Fruits</option>
+                <option value="Washing">Washing Items</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="productPrice">Base Price (Rs.)</label>
+              <input type="number" id="productPrice" class="form-input" placeholder="180" required min="0">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="productImage">Image URL</label>
+            <input type="text" id="productImage" class="form-input" placeholder="src/apple.jpg">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="productStatus">Status</label>
+            <select id="productStatus" class="form-select">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="form-group" id="storePricesSection">
+            <label class="form-label">Store prices (Rs.)</label>
+            <p style="font-size: 0.8rem; color: var(--muted-foreground, #64748b); margin: 0 0 0.5rem;">Inactive products are hidden on the public site. Leave a store blank if this product is not sold there; only stores with a price appear on the shopper site. When you save, the <strong>Price Updates</strong> screen can show previous vs current price, percent change, and history for each store (same browser).</p>
+            <div id="storePricesContainer">Loading…</div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" form="productForm">Save Product</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api-base.js"></script>
+  <script>
+    // Apply settings from localStorage
+    function applySettings() {
+      var theme = localStorage.getItem('adminTheme') || 'light';
+      var compactMode = localStorage.getItem('adminCompactMode') === 'true';
+      var sidebarCollapsed = localStorage.getItem('adminSidebarCollapsed') === 'true';
+      var accentColor = localStorage.getItem('adminAccentColor') || 'green';
+
+      document.body.classList.remove('dark-mode', 'compact-mode', 'sidebar-collapsed');
+      document.body.classList.remove('accent-blue', 'accent-purple', 'accent-orange', 'accent-red');
+
+      if (theme === 'dark') {
+        document.body.classList.add('dark-mode');
+      }
+      if (compactMode) {
+        document.body.classList.add('compact-mode');
+      }
+      if (sidebarCollapsed) {
+        document.body.classList.add('sidebar-collapsed');
+      }
+      if (accentColor !== 'green') {
+        document.body.classList.add('accent-' + accentColor);
+      }
+    }
+
+    // Apply settings on page load
+    applySettings();
+
+    if (!localStorage.getItem('adminToken')) {
+      window.location.href = '../user/login.html';
+    }
+
+    // Listen for storage changes from other tabs
+    window.addEventListener('storage', function(e) {
+      if (e.key && e.key.startsWith('admin')) {
+        applySettings();
+      }
+    });
+
+    // Set user info
+    var userName = localStorage.getItem('adminName') || 'Admin';
+    document.getElementById('userName').textContent = userName;
+    document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
+
+    // Load admin photo if exists
+    var adminPhoto = localStorage.getItem('adminPhoto');
+    if (adminPhoto) {
+      document.getElementById('userAvatar').innerHTML = '<img src="' + adminPhoto + '" alt="Admin">';
+    }
+
+    var API_BASE = window.API_BASE || ('http://' + location.hostname + ':5000/api');
+    var SNAPSHOT_KEY = 'adminPriceSnapshots';
+    var HISTORY_KEY = 'adminPriceHistory';
+    var products = [];
+    var categories = [];
+
+    function loadSnapshots() {
+      try {
+        return JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+    function saveSnapshots(obj) {
+      localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(obj));
+    }
+    function snapshotKey(productId, storeId) {
+      return String(productId) + '_' + String(storeId);
+    }
+    function loadHistoryMap() {
+      try {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+    function saveHistoryMap(obj) {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(obj));
+    }
+    function appendPriceHistory(productId, storeId, price) {
+      var m = loadHistoryMap();
+      var k = snapshotKey(productId, storeId);
+      if (!m[k]) m[k] = [];
+      var arr = m[k];
+      var last = arr.length ? arr[arr.length - 1] : null;
+      if (!last || Number(last.price) !== Number(price)) {
+        arr.push({ t: new Date().toISOString(), price: Number(price) });
+        if (arr.length > 50) arr.splice(0, arr.length - 50);
+      }
+      saveHistoryMap(m);
+    }
+
+    /** Before saving store prices: record old DB prices so Price Updates can show previous vs current, %, and history. */
+    function applyStorePriceTrackingBeforeSave(productId, entries) {
+      var pid = String(productId);
+      var snap = loadSnapshots();
+      return window.apiFetch('/admin/products/' + encodeURIComponent(pid) + '/store-prices')
+        .then(function (res) {
+          return res.json().then(function (body) {
+            if (!res.ok) throw new Error(body.message || 'Could not load store prices');
+            return body;
+          });
+        })
+        .then(function (sp) {
+          var oldMap = {};
+          (sp.entries || []).forEach(function (e) {
+            if (e.storeId != null && e.price != null && e.price !== '') {
+              oldMap[String(e.storeId)] = Number(e.price);
+            }
+          });
+          entries.forEach(function (ent) {
+            var sid = String(ent.storeId);
+            var oldP = oldMap[sid];
+            var newP = Number(ent.price);
+            if (oldP !== undefined) {
+              snap[snapshotKey(pid, sid)] = oldP;
+            } else {
+              delete snap[snapshotKey(pid, sid)];
+            }
+            if (oldP === undefined || Number(oldP) !== newP) {
+              appendPriceHistory(pid, sid, newP);
+            }
+          });
+          saveSnapshots(snap);
+        });
+    }
+
+    var filteredProducts = products.slice();
+    var currentPage = 1;
+    var itemsPerPage = 10;
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('open');
+    }
+
+    function logout() {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminId');
+      localStorage.removeItem('adminLoggedIn');
+      localStorage.removeItem('adminEmail');
+      localStorage.removeItem('adminName');
+      window.location.href = '../user/login.html';
+    }
+
+    function normalizeCategoryName(value) {
+      return String(value || '').toLowerCase().replace(/\s+/g, '');
+    }
+
+    function renderProducts() {
+      var tbody = document.getElementById('productsTableBody');
+      tbody.innerHTML = '';
+
+      var startIndex = (currentPage - 1) * itemsPerPage;
+      var endIndex = startIndex + itemsPerPage;
+      var pageProducts = filteredProducts.slice(startIndex, endIndex);
+
+      pageProducts.forEach(function(product) {
+        var row = document.createElement('tr');
+        row.innerHTML = 
+          '<td data-label="Product">' +
+            '<div class="product-cell">' +
+              '<img src="../' + product.image + '" alt="' + product.name + '" class="product-img" onerror="this.style.background=\'var(--muted)\';this.src=\'\';">' +
+              '<div>' +
+                '<div class="product-name">' + product.name + '</div>' +
+                '<div class="product-category">' + product.category + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+          '<td data-label="Category">' + product.category + '</td>' +
+          '<td data-label="Price">' + (typeof formatMoney === 'function' ? formatMoney(product.price) : ('Rs. ' + product.price)) + '</td>' +
+          '<td data-label="Status"><span class="status-badge ' + product.status + '">' + (product.status === 'active' ? 'Active' : 'Inactive') + '</span></td>' +
+          '<td data-label="Actions">' +
+            '<div class="actions-cell">' +
+              '<button class="action-btn" onclick="openModal(\'edit\', \'' + product.id + '\')" title="Edit">' +
+                '<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>' +
+                '</svg>' +
+              '</button>' +
+              '<button class="action-btn delete" onclick="deleteProduct(\'' + product.id + '\')" title="Delete">' +
+                '<svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>' +
+                '</svg>' +
+              '</button>' +
+            '</div>' +
+          '</td>';
+        tbody.appendChild(row);
+      });
+
+      document.getElementById('totalCount').textContent = filteredProducts.length;
+      var showStart = filteredProducts.length > 0 ? startIndex + 1 : 0;
+      var showEnd = Math.min(endIndex, filteredProducts.length);
+      document.getElementById('showingCount').textContent = showStart + '-' + showEnd;
+      document.getElementById('productCount').textContent = products.length;
+
+      renderPagination();
+    }
+
+    function renderPagination() {
+      var totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+      var container = document.getElementById('paginationBtns');
+      container.innerHTML = '';
+
+      var prevBtn = document.createElement('button');
+      prevBtn.className = 'pagination-btn';
+      prevBtn.textContent = '< Prev';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = function() { if (currentPage > 1) { currentPage--; renderProducts(); } };
+      container.appendChild(prevBtn);
+
+      for (var i = 1; i <= Math.min(totalPages, 5); i++) {
+        var pageBtn = document.createElement('button');
+        pageBtn.className = 'pagination-btn' + (i === currentPage ? ' active' : '');
+        pageBtn.textContent = i;
+        pageBtn.onclick = (function(page) { return function() { currentPage = page; renderProducts(); }; })(i);
+        container.appendChild(pageBtn);
+      }
+
+      var nextBtn = document.createElement('button');
+      nextBtn.className = 'pagination-btn';
+      nextBtn.textContent = 'Next >';
+      nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+      nextBtn.onclick = function() { if (currentPage < totalPages) { currentPage++; renderProducts(); } };
+      container.appendChild(nextBtn);
+    }
+
+    function filterProducts() {
+      var search = document.getElementById('searchInput').value.toLowerCase();
+      var category = document.getElementById('categoryFilter').value;
+      var status = document.getElementById('statusFilter').value;
+
+      filteredProducts = products.filter(function(p) {
+        var matchSearch = p.name.toLowerCase().indexOf(search) !== -1;
+        var matchCategory = !category || normalizeCategoryName(p.category) === normalizeCategoryName(category);
+        var matchStatus = !status || p.status === status;
+        return matchSearch && matchCategory && matchStatus;
+      });
+
+      currentPage = 1;
+      renderProducts();
+    }
+
+    function renderStorePriceInputs(stores, priceMap, base, isNewProduct) {
+      var container = document.getElementById('storePricesContainer');
+      if (!stores || !stores.length) {
+        container.innerHTML = '<p style="color:#b91c1c;">No stores found. Add stores first.</p>';
+        return;
+      }
+      var html = '<div style="max-height:220px;overflow-y:auto;border:1px solid rgba(0,0,0,0.08);border-radius:8px;padding:0.5rem;">';
+      for (var i = 0; i < stores.length; i++) {
+        var s = stores[i];
+        var sid = String(s._id);
+        var val = '';
+        if (priceMap && Object.prototype.hasOwnProperty.call(priceMap, sid)) {
+          var pv = priceMap[sid];
+          val = pv === null || pv === undefined || pv === '' ? '' : String(pv);
+        } else if (isNewProduct) {
+          val = String(base);
+        }
+        html += '<div class="form-row" style="align-items:center;margin-bottom:0.35rem;gap:0.5rem;">' +
+          '<label style="flex:1;min-width:100px;font-size:0.85rem;">' + String(s.name).replace(/</g, '') + '</label>' +
+          '<input type="number" min="0" step="1" class="form-input store-price-input" data-store-id="' + sid + '" value="' + val.replace(/"/g, '&quot;') + '" placeholder="—" title="Leave empty if not sold here" style="max-width:110px;">' +
+          '</div>';
+      }
+      html += '</div>';
+      html += '<button type="button" class="btn btn-outline" style="margin-top:0.5rem;font-size:0.85rem;" onclick="copyBaseToAllStorePrices()">Copy base price to all stores</button>';
+      container.innerHTML = html;
+    }
+
+    function copyBaseToAllStorePrices() {
+      var base = parseFloat(document.getElementById('productPrice').value);
+      if (Number.isNaN(base) || base < 0) {
+        alert('Set a valid base price first.');
+        return;
+      }
+      var nodes = document.querySelectorAll('.store-price-input');
+      for (var i = 0; i < nodes.length; i++) nodes[i].value = String(base);
+    }
+
+    function fillStorePriceRows(productId) {
+      var container = document.getElementById('storePricesContainer');
+      container.innerHTML = 'Loading store prices…';
+      var base = parseFloat(document.getElementById('productPrice').value) || 0;
+      window.apiFetch('/admin/stores?limit=200')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          var stores = data.items || [];
+          if (!productId) {
+            renderStorePriceInputs(stores, null, base, true);
+            return null;
+          }
+          return window.apiFetch('/admin/products/' + productId + '/store-prices')
+            .then(function(res) { return res.json(); })
+            .then(function(sp) {
+              var map = {};
+              (sp.entries || []).forEach(function(e) {
+                map[String(e.storeId)] = e.price;
+              });
+              renderStorePriceInputs(stores, map, base, false);
+            });
+        })
+        .catch(function() {
+          container.innerHTML = '<p style="color:#b91c1c;">Could not load stores.</p>';
+        });
+    }
+
+    function openModal(mode, id) {
+      document.getElementById('productModal').classList.add('open');
+      document.getElementById('modalTitle').textContent = mode === 'add' ? 'Add New Product' : 'Edit Product';
+      
+      if (mode === 'edit' && id) {
+        var product = null;
+        for (var i = 0; i < products.length; i++) {
+          if (products[i].id === id) {
+            product = products[i];
+            break;
+          }
+        }
+        if (product) {
+          document.getElementById('productId').value = product.id;
+          document.getElementById('productName').value = product.name;
+          document.getElementById('productCategory').value = String(product.category || '').replace(/\s+/g, '');
+          document.getElementById('productPrice').value = product.price;
+          document.getElementById('productImage').value = product.image;
+          document.getElementById('productStatus').value = product.status;
+          fillStorePriceRows(product.id);
+        }
+      } else {
+        document.getElementById('productForm').reset();
+        document.getElementById('productId').value = '';
+        document.getElementById('productStatus').value = 'active';
+        fillStorePriceRows('');
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('productModal').classList.remove('open');
+    }
+
+    function saveProduct(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      
+      var id = document.getElementById('productId').value;
+      var categoryId = null;
+      for (var c = 0; c < categories.length; c++) {
+        if (normalizeCategoryName(categories[c].name) === normalizeCategoryName(document.getElementById('productCategory').value)) {
+          categoryId = categories[c]._id;
+          break;
+        }
+      }
+
+      var productData = {
+        name: document.getElementById('productName').value,
+        categoryId: categoryId,
+        price: parseInt(document.getElementById('productPrice').value),
+        image: document.getElementById('productImage').value,
+        status: document.getElementById('productStatus').value
+      };
+
+      if (!productData.categoryId) {
+        alert('Please select a valid category');
+        return false;
+      }
+
+      var path = '/admin/products' + (id ? '/' + id : '');
+      var method = id ? 'PUT' : 'POST';
+      window.apiFetch(path, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productData)
+      })
+        .then(function(res) {
+          return res.json().then(function(body) {
+            if (!res.ok) throw new Error(body.message || 'Save failed');
+            return body;
+          });
+        })
+        .then(function(saved) {
+          var pid = String(saved._id || id);
+          var entries = [];
+          document.querySelectorAll('.store-price-input').forEach(function(inp) {
+            var raw = (inp.value || '').trim();
+            if (raw === '') return;
+            var n = parseFloat(raw);
+            if (Number.isNaN(n) || n < 0) return;
+            entries.push({
+              storeId: inp.getAttribute('data-store-id'),
+              price: n
+            });
+          });
+          var trackThenPut = entries.length
+            ? applyStorePriceTrackingBeforeSave(pid, entries).then(function() {
+                return window.apiFetch('/admin/products/' + pid + '/store-prices', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ entries: entries })
+                }).then(function(res2) {
+                  return res2.json().then(function(body2) {
+                    if (!res2.ok) throw new Error(body2.message || 'Store prices failed');
+                  });
+                });
+              })
+            : window.apiFetch('/admin/products/' + pid + '/store-prices', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ entries: entries })
+              }).then(function(res2) {
+                return res2.json().then(function(body2) {
+                  if (!res2.ok) throw new Error(body2.message || 'Store prices failed');
+                });
+              });
+          return trackThenPut;
+        })
+        .then(function() {
+          alert(id ? 'Product updated successfully!' : 'Product added successfully!');
+          closeModal();
+          loadProducts();
+        })
+        .catch(function(error) {
+          alert(error.message || 'Failed to save product');
+        });
+      return false;
+    }
+
+    function deleteProduct(id) {
+      if (confirm('Are you sure you want to delete this product?')) {
+        window.apiFetch('/admin/products/' + id, { method: 'DELETE' })
+          .then(function(res) { return res.json(); })
+          .then(function() {
+            alert('Product deleted successfully!');
+            loadProducts();
+          })
+          .catch(function(error) {
+            alert(error.message || 'Failed to delete product');
+          });
+      }
+    }
+
+    function loadCategories() {
+      return window.apiFetch('/admin/categories?limit=100')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          categories = data.items || [];
+        });
+    }
+
+    function loadProducts() {
+      return window.apiFetch('/admin/products?limit=500')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          products = (data.items || []).map(function(item) {
+            return {
+              id: item._id,
+              name: item.name,
+              category: item.category ? item.category.name : '',
+              price: item.price,
+              image: item.image || 'src/apple.jpg',
+              status: item.status
+            };
+          });
+          filteredProducts = products.slice();
+          filterProducts();
+        });
+    }
+
+    Promise.all([loadCategories(), loadProducts()]).catch(function(error) {
+      alert(error.message || 'Could not load products');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Planner - Grocery Price Tracker</title>
+  <meta name="description" content="Plan your grocery budget, track spending, and find the best prices on all your favorite products.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #22c55e;
+      --primary-dark: #16a34a;
+      --primary-light: #dcfce7;
+      --background: #f0fdf4;
+      --foreground: #14532d;
+      --card: #ffffff;
+      --muted: #f0fdf4;
+      --muted-foreground: #4b5563;
+      --border: #d1fae5;
+      --radius: 0.75rem;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--background);
+      color: var(--foreground);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; height: auto; }
+    .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner { display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+    .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 1.25rem; color: var(--foreground); }
+    .logo-icon { width: 2rem; height: 2rem; background: var(--primary); border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; color: white; }
+
+    .nav-desktop { display: none; align-items: center; gap: 2rem; }
+    @media (min-width: 768px) { .nav-desktop { display: flex; } }
+
+    .nav-link { font-size: 0.875rem; font-weight: 500; color: var(--muted-foreground); transition: color 0.2s; }
+    .nav-link:hover { color: var(--primary); }
+    .nav-link.active { color: var(--primary); }
+
+    .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      padding: 0.625rem 1.25rem; font-size: 0.875rem; font-weight: 500;
+      border-radius: var(--radius); border: none; cursor: pointer; transition: all 0.2s;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--muted-foreground); }
+    .btn-ghost:hover { background: var(--muted); color: var(--foreground); }
+    .btn-outline { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+    .mobile-menu-btn { display: flex; padding: 0.5rem; background: transparent; border: none; cursor: pointer; }
+    @media (min-width: 768px) { .mobile-menu-btn { display: none; } }
+
+    .mobile-nav { display: none; padding: 1rem; border-top: 1px solid var(--border); background: white; }
+    .mobile-nav.open { display: block; }
+    .mobile-nav a { display: block; padding: 0.75rem 0; font-weight: 500; color: var(--muted-foreground); }
+
+    /* Page Header */
+    .page-header { padding: 3rem 0 2rem; text-align: center; background: linear-gradient(to bottom, white, var(--background)); }
+    .page-badge { display: inline-flex; padding: 0.375rem 0.875rem; background: var(--primary-light); color: var(--primary-dark); border-radius: 9999px; font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem; }
+    .page-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem; }
+    @media (min-width: 768px) { .page-title { font-size: 2.5rem; } }
+    .page-description { font-size: 1rem; color: var(--muted-foreground); max-width: 600px; margin: 0 auto; }
+
+    /* Budget Section */
+    .budget-section { padding: 2rem 0 4rem; }
+
+    .budget-grid {
+      display: grid;
+      gap: 2rem;
+    }
+
+    @media (min-width: 1024px) {
+      .budget-grid { grid-template-columns: 1fr 380px; }
+    }
+
+    /* Budget Input Card */
+    .budget-input-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .budget-input-card h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .budget-form {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .budget-input-group {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .budget-input-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .budget-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .budget-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Products Grid */
+    .products-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .products-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 768px) {
+      .products-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .product-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      transition: all 0.3s;
+    }
+
+    .product-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.1);
+    }
+
+    .product-card.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .product-image {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 0.5rem;
+      object-fit: cover;
+      margin-bottom: 0.75rem;
+    }
+
+    .product-name {
+      font-weight: 600;
+      font-size: 0.9375rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .product-category {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+      margin-bottom: 0.5rem;
+    }
+
+    .product-price {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+    }
+
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .qty-btn {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .qty-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .qty-value {
+      width: 2.5rem;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    /* Cart Sidebar */
+    .cart-sidebar {
+      position: sticky;
+      top: 5rem;
+    }
+
+    .cart-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cart-header h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .cart-count {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .cart-items {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 1.5rem;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+
+    .cart-item-info {
+      flex: 1;
+    }
+
+    .cart-item-name {
+      font-weight: 500;
+      font-size: 0.9375rem;
+    }
+
+    .cart-item-qty {
+      font-size: 0.75rem;
+      color: var(--muted-foreground);
+    }
+
+    .cart-item-price {
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .cart-item-remove {
+      background: transparent;
+      border: none;
+      color: var(--red);
+      cursor: pointer;
+      padding: 0.25rem;
+      margin-left: 0.5rem;
+    }
+
+    .cart-empty {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted-foreground);
+    }
+
+    .cart-summary {
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .summary-row.total {
+      font-weight: 700;
+      font-size: 1.125rem;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .budget-progress {
+      margin-top: 1.5rem;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .progress-bar {
+      height: 0.5rem;
+      background: var(--muted);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.3s, background 0.3s;
+    }
+
+    .progress-fill.ok { background: var(--primary); }
+    .progress-fill.warning { background: var(--yellow); }
+    .progress-fill.over { background: var(--red); }
+
+    .budget-status {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      text-align: center;
+    }
+
+    .budget-status.ok { color: var(--primary); }
+    .budget-status.warning { color: var(--yellow); }
+    .budget-status.over { color: var(--red); }
+
+    /* Category Filter */
+    .category-filter {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--primary);
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Footer */
+    .footer { background: var(--foreground); color: white; padding: 4rem 0 2rem; }
+    .footer-grid { display: grid; gap: 2rem; margin-bottom: 3rem; }
+    @media (min-width: 768px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; } }
+
+    .footer-brand p { color: rgba(255,255,255,0.7); font-size: 0.875rem; margin: 1rem 0; max-width: 280px; }
+    .footer-social { display: flex; gap: 0.75rem; }
+    .social-link { width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: white; transition: background 0.2s; }
+    .social-link:hover { background: var(--primary); }
+
+    .footer-column h4 { font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem; }
+    .footer-column ul { list-style: none; }
+    .footer-column li { margin-bottom: 0.5rem; }
+    .footer-column a { color: rgba(255,255,255,0.7); font-size: 0.875rem; transition: color 0.2s; }
+    .footer-column a:hover { color: var(--primary); }
+
+    .footer-bottom { padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 1rem; align-items: center; text-align: center; }
+    @media (min-width: 768px) { .footer-bottom { flex-direction: row; justify-content: space-between; text-align: left; } }
+    .footer-bottom p { color: rgba(255,255,255,0.5); font-size: 0.875rem; }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { color: rgba(255,255,255,0.5); font-size: 0.875rem; }
+    .footer-links a:hover { color: white; }
+
+    .icon { width: 1.25rem; height: 1.25rem; }
+    .icon-lg { width: 1.5rem; height: 1.5rem; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-inner">
+        <a href="index.html" class="logo">
+          <div class="logo-icon">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </div>
+          <span>GroceryTracker</span>
+        </a>
+
+        <nav class="nav-desktop">
+          <a href="stores.html" class="nav-link">Price Compare</a>
+          <a href="trends.html" class="nav-link">Trends</a>
+          <a href="budget.html" class="nav-link active">Budget</a>
+          <a href="about.html" class="nav-link">About</a>
+          <a href="contact.html" class="nav-link">Contact</a>
+        </nav>
+
+        <div class="header-actions">
+          <a href="index.html" class="btn btn-primary">Home</a>
+          <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+            <svg class="icon-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <nav class="mobile-nav" id="mobileNav">
+        <a href="stores.html">Price Compare</a>
+        <a href="trends.html">Trends</a>
+        <a href="budget.html">Budget</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Page Header -->
+    <section class="page-header">
+      <div class="container">
+        <span class="page-badge">Budget Planner</span>
+        <h1 class="page-title">Plan Your Grocery Budget</h1>
+        <p class="page-description">
+          Add products to your shopping list and track your spending against your budget in real-time.
+        </p>
+      </div>
+    </section>
+
+    <!-- Budget Section -->
+    <section class="budget-section">
+      <div class="container">
+        <!-- Budget Input -->
+        <div class="budget-input-card">
+          <h3>Set Your Budget</h3>
+          <div class="budget-form">
+            <div class="budget-input-group">
+              <label for="budgetAmount">Monthly Budget (Rs.)</label>
+              <input type="number" id="budgetAmount" class="budget-input" value="5000" min="0" step="100" onchange="updateBudget()">
+            </div>
+          </div>
+        </div>
+
+        <div class="budget-grid">
+          <!-- Products -->
+          <div>
+            <div class="category-filter">
+              <button class="filter-btn active" onclick="filterCategory('all', this)">All</button>
+              <button class="filter-btn" onclick="filterCategory('Fruits', this)">Fruits</button>
+              <button class="filter-btn" onclick="filterCategory('Vegetables', this)">Vegetables</button>
+              <button class="filter-btn" onclick="filterCategory('Dairy', this)">Dairy</button>
+              <button class="filter-btn" onclick="filterCategory('Bakery', this)">Bakery</button>
+              <button class="filter-btn" onclick="filterCategory('Grains', this)">Grains</button>
+              <button class="filter-btn" onclick="filterCategory('DryFruits', this)">Dry Fruits</button>
+              <button class="filter-btn" onclick="filterCategory('Washing', this)">Washing</button>
+            </div>
+
+            <div class="products-grid" id="productsGrid">
+              <!-- Products will be rendered by JavaScript -->
+            </div>
+          </div>
+
+          <!-- Cart Sidebar -->
+          <div class="cart-sidebar">
+            <div class="cart-card">
+              <div class="cart-header">
+                <h3>Shopping List</h3>
+                <span class="cart-count" id="cartCount">0 items</span>
+              </div>
+
+              <div class="cart-items" id="cartItems">
+                <div class="cart-empty">
+                  Your shopping list is empty. Add products to get started.
+                </div>
+              </div>
+
+              <div class="cart-summary">
+                <div class="summary-row">
+                  <span>Subtotal</span>
+                  <span id="subtotal">Rs. 0</span>
+                </div>
+                <div class="summary-row">
+                  <span>Estimated Tax (5%)</span>
+                  <span id="tax">Rs. 0</span>
+                </div>
+                <div class="summary-row total">
+                  <span>Total</span>
+                  <span id="total">Rs. 0</span>
+                </div>
+              </div>
+
+              <div class="budget-progress">
+                <div class="progress-header">
+                  <span>Budget Used</span>
+                  <span id="budgetUsed">Rs. 0 / Rs. 5000</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill ok" id="progressFill" style="width: 0%;"></div>
+                </div>
+                <div class="budget-status ok" id="budgetStatus">You're within budget</div>
+              </div>
+
+              <button class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" onclick="clearCart()">
+                Clear List
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="logo" style="color: white;">
+            <div class="logo-icon">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+            </div>
+            <span>GroceryTracker</span>
+          </a>
+          <p>Making grocery shopping smarter, one price at a time.</p>
+          <div class="footer-social">
+            <a href="#" class="social-link" aria-label="Twitter">
+              <svg class="icon" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/></svg>
+            </a>
+            <a href="#" class="social-link" aria-label="Facebook">
+              <svg class="icon" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="#" class="social-link" aria-label="Instagram">
+              <svg class="icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="footer-column">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="stores.html">Price Compare</a></li>
+            <li><a href="trends.html">Price Trends</a></li>
+            <li><a href="budget.html">Budget Planner</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h4>Categories</h4>
+          <ul>
+            <li><a href="#">Fruits</a></li>
+            <li><a href="#">Vegetables</a></li>
+            <li><a href="#">Dairy</a></li>
+            <li><a href="#">Grains</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>2026 GroceryTracker. All rights reserved.</p>
+        <div class="footer-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/api-base.js"></script>
+  <script>
+    const API_BASE = window.API_BASE || ('http://' + location.hostname + ':5000/api');
+
+    function fm(n) {
+      return typeof formatMoney === 'function' ? formatMoney(n) : ('Rs. ' + Math.round(Number(n) || 0));
+    }
+
+    // FIX: products array and cart use a consistent string key (product index)
+    // All product lookups use products[idx] via the cart's numeric index key.
+    let products = [];   // [{id, name, category, price, image}, ...]
+    let cart = {};       // { "arrayIndex": quantity }  — keys are always strings (JS object keys)
+    let budget = 5000;
+    let currentFilter = 'all';
+
+    function toggleMobileMenu() {
+      document.getElementById('mobileNav').classList.toggle('open');
+    }
+
+    // FIX: Use the product's index in the products array as the stable cart key.
+    // This avoids issues with MongoDB ObjectId strings containing special characters
+    // that can break inline onclick attributes, and eliminates all type-mismatch
+    // problems between cart keys and product id lookups.
+    function getProductByKey(key) {
+      return products[parseInt(key, 10)];
+    }
+
+    function renderProducts() {
+      const grid = document.getElementById('productsGrid');
+      const filtered = products
+        .map(function(product, idx) { return { product: product, idx: idx }; })
+        .filter(function(entry) {
+          return currentFilter === 'all' || entry.product.category === currentFilter;
+        });
+
+      grid.innerHTML = filtered.map(function(entry) {
+        var product = entry.product;
+        var idx = entry.idx;
+        var qty = cart[idx] || 0;
+        return (
+          '<div class="product-card ' + (qty > 0 ? 'selected' : '') + '" data-category="' + product.category + '">' +
+            '<img src="' + product.image + '" alt="' + escHtml(product.name) + '" class="product-image" onerror="this.src=\'https://via.placeholder.com/200x200?text=Image\'">' +
+            '<div class="product-name">' + escHtml(product.name) + '</div>' +
+            '<div class="product-category">' + (product.category === 'DryFruits' ? 'Dry Fruits' : escHtml(product.category)) + '</div>' +
+            '<div class="product-price">' + fm(product.price) + '</div>' +
+            '<div class="quantity-controls">' +
+              '<button class="qty-btn" onclick="updateQuantity(' + idx + ', -1)">-</button>' +
+              '<span class="qty-value">' + qty + '</span>' +
+              '<button class="qty-btn" onclick="updateQuantity(' + idx + ', 1)">+</button>' +
+            '</div>' +
+          '</div>'
+        );
+      }).join('');
+    }
+
+    // FIX: key is now always a safe integer index, no type mismatch possible.
+    function updateQuantity(idx, change) {
+      var current = cart[idx] || 0;
+      var next = Math.max(0, current + change);
+      if (next === 0) {
+        delete cart[idx];
+      } else {
+        cart[idx] = next;
+      }
+      renderProducts();
+      updateCart();
+    }
+
+    function updateCart() {
+      var cartItemsEl = document.getElementById('cartItems');
+      var cartCountEl = document.getElementById('cartCount');
+      var subtotalEl  = document.getElementById('subtotal');
+      var taxEl       = document.getElementById('tax');
+      var totalEl     = document.getElementById('total');
+      var budgetUsedEl  = document.getElementById('budgetUsed');
+      var progressFill  = document.getElementById('progressFill');
+      var budgetStatus  = document.getElementById('budgetStatus');
+
+      var entries = Object.keys(cart);
+      var itemCount = entries.reduce(function(sum, key) { return sum + cart[key]; }, 0);
+
+      cartCountEl.textContent = itemCount + ' item' + (itemCount !== 1 ? 's' : '');
+
+      if (entries.length === 0) {
+        cartItemsEl.innerHTML = '<div class="cart-empty">Your shopping list is empty. Add products to get started.</div>';
+      } else {
+        // FIX: look up product by index key, not by id comparison
+        cartItemsEl.innerHTML = entries.map(function(key) {
+          var product = getProductByKey(key);
+          if (!product) return '';  // guard against stale keys
+          var qty = cart[key];
+          return (
+            '<div class="cart-item">' +
+              '<div class="cart-item-info">' +
+                '<div class="cart-item-name">' + escHtml(product.name) + '</div>' +
+                '<div class="cart-item-qty">Qty: ' + qty + '</div>' +
+              '</div>' +
+              '<span class="cart-item-price">' + fm(product.price * qty) + '</span>' +
+              '<button class="cart-item-remove" onclick="removeItem(' + key + ')">' +
+                '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>' +
+                '</svg>' +
+              '</button>' +
+            '</div>'
+          );
+        }).join('');
+      }
+
+      // FIX: subtotal calculation also uses getProductByKey
+      var subtotal = entries.reduce(function(sum, key) {
+        var product = getProductByKey(key);
+        if (!product) return sum;
+        return sum + (product.price * cart[key]);
+      }, 0);
+
+      var tax   = Math.round(subtotal * 0.05);
+      var total = subtotal + tax;
+
+      subtotalEl.textContent  = fm(subtotal);
+      taxEl.textContent       = fm(tax);
+      totalEl.textContent     = fm(total);
+      budgetUsedEl.textContent = fm(total) + ' / ' + fm(budget);
+
+      var percentage = Math.min((total / budget) * 100, 100);
+      progressFill.style.width = percentage + '%';
+
+      if (total <= budget * 0.75) {
+        progressFill.className   = 'progress-fill ok';
+        budgetStatus.className   = 'budget-status ok';
+        budgetStatus.textContent = "You're within budget";
+      } else if (total <= budget) {
+        progressFill.className   = 'progress-fill warning';
+        budgetStatus.className   = 'budget-status warning';
+        budgetStatus.textContent = 'Approaching budget limit';
+      } else {
+        progressFill.className   = 'progress-fill over';
+        budgetStatus.className   = 'budget-status over';
+        budgetStatus.textContent = 'Over budget by ' + fm(total - budget);
+      }
+    }
+
+    function removeItem(key) {
+      delete cart[key];
+      renderProducts();
+      updateCart();
+    }
+
+    function clearCart() {
+      cart = {};
+      renderProducts();
+      updateCart();
+    }
+
+    function updateBudget() {
+      budget = parseFloat(document.getElementById('budgetAmount').value) || 5000;
+      updateCart();
+    }
+
+    function filterCategory(category, btn) {
+      currentFilter = category;
+      document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      renderProducts();
+    }
+
+    // Helper: escape HTML special chars to prevent XSS in product names
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function loadProducts() {
+      var get = window.apiGetJson || function(path) {
+        return fetch(API_BASE + path).then(function(res) { return res.json(); });
+      };
+      get('/products')
+        .then(function(data) {
+          if (!Array.isArray(data)) throw new Error('Invalid products list');
+          // FIX: store products as a plain array; cart keys are the array indices (0, 1, 2...)
+          products = data.map(function(item) {
+            return {
+              id:       item._id,   // kept for reference but NOT used as cart key
+              name:     item.name,
+              category: (item.category && item.category.name ? item.category.name : '').replace(/\s+/g, ''),
+              price:    item.price,
+              image:    '../' + (item.image || 'src/apple.jpg')
+            };
+          });
+          renderProducts();
+          updateCart();
+        })
+        .catch(function(error) {
+          console.error(error);
+          alert(
+            'Could not load products.\n\nStart the backend: cd D:\\grocerypricetracker\\backend then npm run dev\n' +
+            'Test: http://127.0.0.1:5000/health\n\n' +
+            (error.message || '')
+          );
+        });
+    }
+
+    loadProducts();
+  </script>
+</body>
+</html>
