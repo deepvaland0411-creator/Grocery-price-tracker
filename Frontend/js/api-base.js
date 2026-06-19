@@ -5,14 +5,11 @@
   var host = window.location.hostname;
 
   if (host === "localhost" || host === "127.0.0.1") {
-
-    window.API_BASE = "http://" + host + ":" + port + "/api";
-
-  } else {
-
-    window.API_BASE = window.API_BASE || "http://127.0.0.1:" + port + "/api";
-
-  }
+  window.API_BASE = "http://" + host + ":" + port + "/api";
+} else {
+  window.API_BASE =
+    "https://grocery-price-tracker-backend.onrender.com/api";
+}
 
 
 
