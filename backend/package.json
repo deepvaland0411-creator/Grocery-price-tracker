@@ -7,6 +7,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "node src/seed.js",
+    "update-images": "node src/update-product-images.js",
+    "update-prices": "node src/update-prices.js",
     "reset-admin": "node src/resetAdmin.js"
   },
   "keywords": [],

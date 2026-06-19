@@ -244,5 +244,21 @@
 
   };
 
+
+
+  /** Resolve product image path (supports full URLs and relative paths). */
+
+  window.productImageUrl = function (image, fallback) {
+
+    fallback = fallback || "https://via.placeholder.com/48";
+
+    if (!image) return fallback;
+
+    if (/^https?:\/\//i.test(image)) return image;
+
+    return "../" + image.replace(/^\.\.\//, "");
+
+  };
+
 })();
 

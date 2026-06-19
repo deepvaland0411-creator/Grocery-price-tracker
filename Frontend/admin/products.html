@@ -952,10 +952,13 @@
 
       pageProducts.forEach(function(product) {
         var row = document.createElement('tr');
+        var imgSrc = typeof productImageUrl === 'function'
+          ? productImageUrl(product.image, 'src/apple.jpg')
+          : ('../' + (product.image || 'src/apple.jpg'));
         row.innerHTML = 
           '<td data-label="Product">' +
             '<div class="product-cell">' +
-              '<img src="../' + product.image + '" alt="' + product.name + '" class="product-img" onerror="this.style.background=\'var(--muted)\';this.src=\'\';">' +
+              '<img src="' + imgSrc + '" alt="' + product.name + '" class="product-img" onerror="this.style.background=\'var(--muted)\';this.src=\'\';">' +
               '<div>' +
                 '<div class="product-name">' + product.name + '</div>' +
                 '<div class="product-category">' + product.category + '</div>' +

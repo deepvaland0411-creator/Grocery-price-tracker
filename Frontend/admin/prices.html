@@ -458,7 +458,15 @@
     .data-table tr:last-child td { border-bottom: none; }
     .data-table tr:hover td { background: var(--muted); }
 
-    .product-cell { display: block; }
+    .product-cell { display: flex; align-items: center; gap: 0.75rem; }
+
+    .product-img {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.5rem;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
 
     .product-name { font-weight: 500; color: var(--card-foreground); }
     .product-category { font-size: 0.75rem; color: var(--muted-foreground); }
@@ -1127,7 +1135,14 @@
       var snap = loadSnapshots();
       return (items || []).map(function (row) {
         var key = snapshotKey(row.productId, row.storeId);
-        var prev = snap[key] !== undefined ? snap[key] : row.currentPrice;
+        var prev;
+        if (row.previousPrice !== undefined && row.previousPrice !== null) {
+          prev = row.previousPrice;
+        } else if (snap[key] !== undefined) {
+          prev = snap[key];
+        } else {
+          prev = row.currentPrice;
+        }
         var changePct = prev > 0 ? ((row.currentPrice - prev) / prev) * 100 : 0;
         return {
           id: row.id,
@@ -1329,9 +1344,13 @@
         var storeCell = hideStoreCol
           ? ''
           : '<td data-label="Store"><span class="store-badge">' + sname + '</span></td>';
+        var img = typeof productImageUrl === 'function'
+          ? productImageUrl(price.image, 'src/apple.jpg')
+          : (price.image ? ('../' + price.image) : 'https://via.placeholder.com/40');
         return '<tr>' +
           '<td data-label="Product">' +
             '<div class="product-cell">' +
+              '<img src="' + img + '" alt="' + pname + '" class="product-img" onerror="this.src=\'https://via.placeholder.com/40\'">' +
               '<div class="product-name">' + pname + '</div>' +
             '</div>' +
           '</td>' +

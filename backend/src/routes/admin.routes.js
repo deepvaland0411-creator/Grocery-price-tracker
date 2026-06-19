@@ -5,12 +5,14 @@ const Category = require("../models/category.model");
 const Product = require("../models/product.model");
 const Store = require("../models/store.model");
 const ProductStorePrice = require("../models/productStorePrice.model");
+const PriceHistory = require("../models/priceHistory.model");
 const ContactMessage = require("../models/contactMessage.model");
 const Admin = require("../models/admin.model");
 const config = require("../config");
 const { requireAdmin } = require("../middleware/adminAuth");
 const { sendContactReplyEmail } = require("../mail");
 const { parsePaging, slugify } = require("../utils");
+const { startOfDay, daysAgo } = require("../priceHistoryUtil");
 
 const SUBJECT_LABELS = {
   general: "General Inquiry",
@@ -195,6 +197,20 @@ function parseStorePriceEntry(e) {
   return { store: e.storeId, price: n };
 }
 
+async function recordPriceHistory(productId, entries) {
+  if (!entries || !entries.length) return;
+  const today = startOfDay(new Date());
+  for (const e of entries) {
+    const parsed = parseStorePriceEntry(e);
+    if (!parsed) continue;
+    await PriceHistory.findOneAndUpdate(
+      { product: productId, store: parsed.store, recordedAt: today },
+      { price: parsed.price },
+      { upsert: true, new: true }
+    );
+  }
+}
+
 async function replaceProductStorePrices(productId, entries) {
   await ProductStorePrice.deleteMany({ product: productId });
   if (!entries || !entries.length) return;
@@ -205,7 +221,10 @@ async function replaceProductStorePrices(productId, entries) {
       return { product: productId, store: parsed.store, price: parsed.price };
     })
     .filter(Boolean);
-  if (docs.length) await ProductStorePrice.insertMany(docs);
+  if (docs.length) {
+    await ProductStorePrice.insertMany(docs);
+    await recordPriceHistory(productId, entries);
+  }
 }
 
 router.get("/summary", async (_req, res, next) => {
@@ -299,6 +318,7 @@ router.delete("/categories/:id", async (req, res, next) => {
     if (!found) return res.status(404).json({ message: "Category not found" });
     const prodIds = await Product.find({ category: found._id }).distinct("_id");
     await ProductStorePrice.deleteMany({ product: { $in: prodIds } });
+    await PriceHistory.deleteMany({ product: { $in: prodIds } });
     await Product.deleteMany({ category: found._id });
     await Category.findByIdAndDelete(req.params.id);
     res.json({ message: "Category deleted" });
@@ -415,6 +435,7 @@ router.put("/products/:id", async (req, res, next) => {
 router.delete("/products/:id", async (req, res, next) => {
   try {
     await ProductStorePrice.deleteMany({ product: req.params.id });
+    await PriceHistory.deleteMany({ product: req.params.id });
     const found = await Product.findByIdAndDelete(req.params.id);
     if (!found) return res.status(404).json({ message: "Product not found" });
     res.json({ message: "Product deleted" });
@@ -504,6 +525,7 @@ router.put("/stores/:id", async (req, res, next) => {
 router.delete("/stores/:id", async (req, res, next) => {
   try {
     await ProductStorePrice.deleteMany({ store: req.params.id });
+    await PriceHistory.deleteMany({ store: req.params.id });
     const found = await Store.findByIdAndDelete(req.params.id);
     if (!found) return res.status(404).json({ message: "Store not found" });
     res.json({ message: "Store deleted" });
@@ -515,15 +537,23 @@ router.delete("/stores/:id", async (req, res, next) => {
 /** Flat list of every product×store price (for admin Price Updates page). */
 router.get("/price-rows", async (_req, res, next) => {
   try {
-    const rows = await ProductStorePrice.find()
-      .populate({
-        path: "product",
-        select: "name status image price category",
-        populate: { path: "category", select: "name" },
-      })
-      .populate("store", "name status")
-      .sort({ updatedAt: -1 })
-      .lean();
+    const yesterday = daysAgo(1);
+    const [rows, prevHistory] = await Promise.all([
+      ProductStorePrice.find()
+        .populate({
+          path: "product",
+          select: "name status image price category",
+          populate: { path: "category", select: "name" },
+        })
+        .populate("store", "name status")
+        .sort({ updatedAt: -1 })
+        .lean(),
+      PriceHistory.find({ recordedAt: yesterday }).lean(),
+    ]);
+
+    const prevMap = new Map(
+      prevHistory.map((h) => [`${h.product}_${h.store}`, h.price])
+    );
 
     const items = rows
       .filter(
@@ -533,17 +563,24 @@ router.get("/price-rows", async (_req, res, next) => {
           r.store &&
           r.store.status === "active"
       )
-      .map((r) => ({
-        id: `${r.product._id}_${r.store._id}`,
-        productId: String(r.product._id),
-        storeId: String(r.store._id),
-        product: r.product.name,
-        category: r.product.category && r.product.category.name ? r.product.category.name : "",
-        store: r.store.name,
-        currentPrice: r.price,
-        image: r.product.image || "",
-        updatedAt: r.updatedAt,
-      }));
+      .map((r) => {
+        const prevKey = `${r.product._id}_${r.store._id}`;
+        const previousPrice = prevMap.has(prevKey)
+          ? prevMap.get(prevKey)
+          : r.price;
+        return {
+          id: `${r.product._id}_${r.store._id}`,
+          productId: String(r.product._id),
+          storeId: String(r.store._id),
+          product: r.product.name,
+          category: r.product.category && r.product.category.name ? r.product.category.name : "",
+          store: r.store.name,
+          currentPrice: r.price,
+          previousPrice,
+          image: r.product.image || "",
+          updatedAt: r.updatedAt,
+        };
+      });
     res.json({ items });
   } catch (error) {
     next(error);

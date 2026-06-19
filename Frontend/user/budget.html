@@ -682,7 +682,7 @@
         var qty = cart[idx] || 0;
         return (
           '<div class="product-card ' + (qty > 0 ? 'selected' : '') + '" data-category="' + product.category + '">' +
-            '<img src="' + product.image + '" alt="' + escHtml(product.name) + '" class="product-image" onerror="this.src=\'https://via.placeholder.com/200x200?text=Image\'">' +
+            '<img src="' + (typeof productImageUrl === 'function' ? productImageUrl(product.image) : product.image) + '" alt="' + escHtml(product.name) + '" class="product-image" onerror="this.src=\'https://via.placeholder.com/200x200?text=Image\'">' +
             '<div class="product-name">' + escHtml(product.name) + '</div>' +
             '<div class="product-category">' + (product.category === 'DryFruits' ? 'Dry Fruits' : escHtml(product.category)) + '</div>' +
             '<div class="product-price">' + fm(product.price) + '</div>' +
@@ -830,7 +830,7 @@
               name:     item.name,
               category: (item.category && item.category.name ? item.category.name : '').replace(/\s+/g, ''),
               price:    item.price,
-              image:    '../' + (item.image || 'src/apple.jpg')
+              image: item.image || 'src/apple.jpg'
             };
           });
           renderProducts();

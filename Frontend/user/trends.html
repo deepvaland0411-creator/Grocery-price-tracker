@@ -512,52 +512,6 @@
     let currentCategory = 'Fruits';
     let priceChart = null;
 
-    // Generate random price variation based on base price and period
-    function generatePriceData(basePrice, period, variation = 0.15) {
-      const dataPoints = parseInt(period);
-      const data = [];
-      for (let i = 0; i < dataPoints; i++) {
-        const randomVariation = 1 + (Math.random() - 0.5) * variation;
-        data.push(Math.round(basePrice * randomVariation));
-      }
-      return data;
-    }
-
-    // Generate labels based on period
-    function generateLabels(period) {
-      const labels = [];
-      const p = parseInt(period);
-      
-      if (p === 7) {
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const today = new Date().getDay();
-        for (let i = 6; i >= 0; i--) {
-          labels.push(days[(today - i + 7) % 7]);
-        }
-      } else if (p === 30) {
-        for (let i = 1; i <= 30; i += 3) {
-          labels.push(`Day ${i}`);
-        }
-      } else if (p === 90) {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const today = new Date();
-        for (let i = 2; i >= 0; i--) {
-          const monthIndex = (today.getMonth() - i + 12) % 12;
-          labels.push(months[monthIndex]);
-        }
-        // Add more granular data
-        for (let i = 0; i < 90; i += 10) {
-          labels.push(`Week ${Math.floor(i/7) + 1}`);
-        }
-        return labels.slice(0, 9);
-      } else if (p === 365) {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        return months;
-      }
-      
-      return labels;
-    }
-
     function categoryKey(name) {
       return String(name || '').replace(/\s+/g, '');
     }
@@ -575,7 +529,7 @@
           products[key][item.name] = {
             id: item._id,
             price: item.price,
-            image: '../' + (item.image || 'src/apple.jpg')
+            image: typeof productImageUrl === 'function' ? productImageUrl(item.image) : (item.image || '')
           };
         });
       });
@@ -603,7 +557,7 @@
       }
     }
 
-    // Update chart using real per-store prices from API (lines reflect admin prices)
+    // Update chart using real price history from database
     function updateChart() {
       const productName = document.getElementById('productSelect').value;
       const period = document.getElementById('periodSelect').value;
@@ -614,25 +568,33 @@
       if (!productName || !products[currentCategory] || !products[currentCategory][productName]) return;
 
       const meta = products[currentCategory][productName];
-      const labels = generateLabels(period);
-      const dataPointCount = labels.length;
       const palette = ['#22c55e', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#f97316'];
 
-      get('/products/' + meta.id + '/store-prices')
+      get('/products/' + meta.id + '/price-history?days=' + period)
         .then(function (data) {
-          const rows = (data.prices || []).slice(0, 8);
-          if (!rows.length) {
-            document.getElementById('chartTitle').textContent = productName + ' — add store prices in Admin';
+          const storeSeries = data.stores || [];
+          if (!storeSeries.length) {
+            document.getElementById('chartTitle').textContent = productName + ' — no history yet';
             return;
           }
 
           document.getElementById('chartTitle').textContent = productName + ' Price Trend';
 
-          const datasets = rows.map(function (row, idx) {
-            const base = Number(row.price) || 0;
+          const labels = storeSeries[0].series.map(function (pt) {
+            var d = new Date(pt.date);
+            if (parseInt(period, 10) <= 7) {
+              return d.toLocaleDateString('en-IN', { weekday: 'short' });
+            }
+            if (parseInt(period, 10) >= 365) {
+              return d.toLocaleDateString('en-IN', { month: 'short' });
+            }
+            return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+          });
+
+          const datasets = storeSeries.map(function (row, idx) {
             return {
               label: row.storeName,
-              data: generatePriceData(base, dataPointCount, 0.08),
+              data: row.series.map(function (pt) { return pt.price; }),
               borderColor: palette[idx % palette.length],
               backgroundColor: hexAlpha(palette[idx % palette.length], 0.12),
               tension: 0.4,
@@ -641,42 +603,46 @@
           });
 
           var allVals = [];
-          for (var di = 0; di < datasets.length; di++) {
-            allVals = allVals.concat(datasets[di].data);
-          }
+          datasets.forEach(function (ds) { allVals = allVals.concat(ds.data); });
           const avgPrice = Math.round(allVals.reduce(function (a, b) { return a + b; }, 0) / allVals.length);
           const minPrice = Math.min.apply(null, allVals);
           const maxPrice = Math.max.apply(null, allVals);
 
+          var lowestStore = storeSeries[0].storeName;
+          var highestStore = storeSeries[0].storeName;
+          storeSeries.forEach(function (row) {
+            var last = row.series[row.series.length - 1];
+            if (last && last.price === minPrice) lowestStore = row.storeName;
+            if (last && last.price === maxPrice) highestStore = row.storeName;
+          });
+
           document.getElementById('currentAvg').textContent = '₹' + avgPrice;
           document.getElementById('lowestPrice').textContent = '₹' + minPrice;
           document.getElementById('highestPrice').textContent = '₹' + maxPrice;
+          document.getElementById('lowestStore').textContent = 'at ' + lowestStore;
+          document.getElementById('highestStore').textContent = 'at ' + highestStore;
 
-          const changeEl = document.getElementById('avgChange');
-          const spread = maxPrice - minPrice;
-          const ref = rows.length ? rows.reduce(function (s, r) { return s + r.price; }, 0) / rows.length : 1;
-          const pct = ref ? Math.round((spread / ref) * 100) : 0;
-          changeEl.textContent = 'Spread ~' + pct + '% across stores (from your prices)';
-          changeEl.className = 'stat-change ' + (pct < 8 ? 'positive' : 'negative');
+          var firstAvg = datasets.length ? datasets[0].data[0] : avgPrice;
+          var lastAvg = datasets.length ? datasets[0].data[datasets[0].data.length - 1] : avgPrice;
+          var monthChange = firstAvg ? Math.round(((lastAvg - firstAvg) / firstAvg) * 100) : 0;
+          var changeEl = document.getElementById('avgChange');
+          changeEl.textContent = (monthChange >= 0 ? '+' : '') + monthChange + '% over selected period';
+          changeEl.className = 'stat-change ' + (monthChange <= 0 ? 'positive' : 'negative');
+
+          document.getElementById('bestTime').textContent = monthChange <= -3 ? 'Now' : 'Weekends';
+          document.getElementById('bestTimeNote').textContent = monthChange <= -3 ? 'Prices recently dropped' : 'Check weekly dips in chart';
 
           const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { display: datasets.length > 1 }
-            },
+            plugins: { legend: { display: datasets.length > 1 } },
             scales: {
               y: {
                 beginAtZero: false,
-                ticks: {
-                  callback: function (value) { return '₹' + value; }
-                }
+                ticks: { callback: function (value) { return '₹' + value; } }
               }
             },
-            interaction: {
-              intersect: false,
-              mode: 'index'
-            }
+            interaction: { intersect: false, mode: 'index' }
           };
 
           if (priceChart) {
@@ -694,7 +660,7 @@
           }
         })
         .catch(function () {
-          document.getElementById('chartTitle').textContent = 'Could not load prices';
+          document.getElementById('chartTitle').textContent = 'Could not load price history';
         });
     }
 
@@ -713,47 +679,56 @@
       return out;
     }
 
-    // Update trending products table
+    // Update trending products table from API
     function updateTrendingTable() {
       const tbody = document.getElementById('trendingTableBody');
       tbody.innerHTML = '';
+      const get = window.apiGetJson || function (path) {
+        return fetch(API_BASE + path).then(function (res) { return res.json(); });
+      };
 
-      const trendingProducts = flattenProductsForTrending().slice(0, 8);
+      get('/trends/trending?days=7')
+        .then(function (data) {
+          (data.items || []).slice(0, 8).forEach(function (product) {
+            const change = product.changePercent || 0;
+            let trendClass, trendText;
+            if (change > 2) {
+              trendClass = 'up';
+              trendText = 'Rising';
+            } else if (change < -2) {
+              trendClass = 'down';
+              trendText = 'Falling';
+            } else {
+              trendClass = 'stable';
+              trendText = 'Stable';
+            }
 
-      trendingProducts.forEach(product => {
-        const change = Math.floor(Math.random() * 30) - 15;
-        const lastWeekPrice = Math.round(product.price * (1 - change / 100));
-        
-        let trendClass, trendText;
-        if (change > 2) {
-          trendClass = 'up';
-          trendText = 'Rising';
-        } else if (change < -2) {
-          trendClass = 'down';
-          trendText = 'Falling';
-        } else {
-          trendClass = 'stable';
-          trendText = 'Stable';
-        }
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td data-label="Product">
-            <div class="product-cell">
-              <img src="${product.image}" alt="${product.name}" class="product-img" onerror="this.src='https://via.placeholder.com/48'">
-              <div>
-                <div class="product-name">${product.name}</div>
-                <div class="product-category">${product.category}</div>
-              </div>
-            </div>
-          </td>
-          <td data-label="Current Price" class="price">${typeof formatMoney === 'function' ? formatMoney(product.price) : 'Rs. ' + product.price}</td>
-          <td data-label="Last Week" class="price">${typeof formatMoney === 'function' ? formatMoney(lastWeekPrice) : 'Rs. ' + lastWeekPrice}</td>
-          <td data-label="Change"><span class="trend-badge ${trendClass}">${change > 0 ? '+' : ''}${change}%</span></td>
-          <td data-label="Trend"><span class="trend-badge ${trendClass}">${trendText}</span></td>
-        `;
-        tbody.appendChild(row);
-      });
+            const img = typeof productImageUrl === 'function'
+              ? productImageUrl(product.image)
+              : (product.image || 'https://via.placeholder.com/48');
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td data-label="Product">
+                <div class="product-cell">
+                  <img src="${img}" alt="${product.name}" class="product-img" onerror="this.src='https://via.placeholder.com/48'">
+                  <div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-category">${product.category || ''}</div>
+                  </div>
+                </div>
+              </td>
+              <td data-label="Current Price" class="price">${typeof formatMoney === 'function' ? formatMoney(product.currentPrice) : 'Rs. ' + product.currentPrice}</td>
+              <td data-label="Last Week" class="price">${typeof formatMoney === 'function' ? formatMoney(product.previousPrice) : 'Rs. ' + product.previousPrice}</td>
+              <td data-label="Change"><span class="trend-badge ${trendClass}">${change > 0 ? '+' : ''}${change}%</span></td>
+              <td data-label="Trend"><span class="trend-badge ${trendClass}">${trendText}</span></td>
+            `;
+            tbody.appendChild(row);
+          });
+        })
+        .catch(function () {
+          tbody.innerHTML = '<tr><td colspan="5">Could not load trending data. Start the backend and run npm run seed.</td></tr>';
+        });
     }
 
     // Category pill click handler

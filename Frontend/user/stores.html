@@ -320,6 +320,7 @@ img {
 
 .product-image {
   position: relative;
+  align-self: start;
 }
 
 .product-image img {
@@ -749,7 +750,7 @@ function loadInitialData() {
       products[key][p.name] = {
         id: p._id,
         price: p.price,
-        image: "../" + (p.image || "src/apple.jpg")
+        image: typeof productImageUrl === "function" ? productImageUrl(p.image) : (p.image || "")
       };
     });
   });
@@ -895,6 +896,23 @@ itemSelect.addEventListener("change", function() {
 });
 
 loadInitialData().then(function () {
+  var params = new URLSearchParams(window.location.search);
+  var slug = (params.get("category") || "").toLowerCase();
+  var slugMap = {
+    fruits: "Fruits",
+    vegetables: "Vegetables",
+    dairy: "Dairy",
+    bakery: "Bakery",
+    grains: "Grains",
+    dryfruits: "DryFruits",
+    washing: "Washing"
+  };
+  if (slug && slugMap[slug]) {
+    categorySelect.value = slugMap[slug];
+    document.querySelectorAll(".category-pill").forEach(function (pill) {
+      pill.classList.toggle("active", pill.dataset.category === slugMap[slug]);
+    });
+  }
   categorySelect.dispatchEvent(new Event("change"));
 }).catch(function (error) {
   console.error(error);

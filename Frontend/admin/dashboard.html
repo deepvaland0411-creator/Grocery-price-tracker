@@ -1213,7 +1213,7 @@
       });
     }
 
-    // Update advanced chart (per-store prices from admin API)
+    // Update advanced chart using real price history from database
     function updateAdvancedChart() {
       var selectedValue = document.getElementById('productSelect').value;
       var period = document.getElementById('chartPeriod').value;
@@ -1233,14 +1233,11 @@
       var pid = productData.id;
       if (!pid) return;
 
-      var labels = generateLabels(period);
-      var dataPointCount = labels.length;
-
-      get('/admin/products/' + pid + '/store-prices')
-        .then(function (sp) {
-          var rows = (sp.entries || []).filter(function (r) { return r.price != null && r.price >= 0; }).slice(0, 8);
-          if (!rows.length) {
-            document.getElementById('avgChange').textContent = 'Add store prices in Products';
+      get('/products/' + pid + '/price-history?days=' + period)
+        .then(function (data) {
+          var storeSeries = data.stores || [];
+          if (!storeSeries.length) {
+            document.getElementById('avgChange').textContent = 'No price history yet — run npm run seed';
             if (priceChart) {
               priceChart.destroy();
               priceChart = null;
@@ -1248,16 +1245,27 @@
             return;
           }
 
+          var labels = storeSeries[0].series.map(function (pt) {
+            var d = new Date(pt.date);
+            if (parseInt(period, 10) <= 7) {
+              return d.toLocaleDateString('en-IN', { weekday: 'short' });
+            }
+            if (parseInt(period, 10) >= 365) {
+              return d.toLocaleDateString('en-IN', { month: 'short' });
+            }
+            return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+          });
+
           var datasets = [];
-          for (var i = 0; i < rows.length; i++) {
-            var base = Number(rows[i].price) || 0;
+          for (var i = 0; i < storeSeries.length; i++) {
+            var row = storeSeries[i];
             var c = storeColors[i % storeColors.length];
             datasets.push({
-              label: rows[i].storeName,
-              data: generatePriceData(base, dataPointCount, 0),
+              label: row.storeName,
+              data: row.series.map(function (pt) { return pt.price; }),
               borderColor: c,
               backgroundColor: c,
-              tension: 0,
+              tension: 0.3,
               fill: false,
               pointRadius: 3,
               pointHoverRadius: 5
@@ -1273,37 +1281,27 @@
           var minPrice = Math.min.apply(null, allPrices);
           var maxPrice = Math.max.apply(null, allPrices);
 
-          var lowestStoreIndex = 0;
-          var highestStoreIndex = 0;
-          var lowestStoreMin = Infinity;
-          var highestStoreMax = 0;
-
-          datasets.forEach(function (ds, idx) {
-            var storeMin = Math.min.apply(null, ds.data);
-            var storeMax = Math.max.apply(null, ds.data);
-            if (storeMin < lowestStoreMin) {
-              lowestStoreMin = storeMin;
-              lowestStoreIndex = idx;
-            }
-            if (storeMax > highestStoreMax) {
-              highestStoreMax = storeMax;
-              highestStoreIndex = idx;
-            }
+          var lowestStore = storeSeries[0].storeName;
+          var highestStore = storeSeries[0].storeName;
+          storeSeries.forEach(function (row) {
+            var last = row.series[row.series.length - 1];
+            if (last && last.price === minPrice) lowestStore = row.storeName;
+            if (last && last.price === maxPrice) highestStore = row.storeName;
           });
 
           var fm = typeof formatMoney === 'function' ? formatMoney : function (n) { return 'Rs. ' + n; };
           document.getElementById('currentAvg').textContent = fm(avgPrice);
           document.getElementById('lowestPrice').textContent = fm(minPrice);
           document.getElementById('highestPrice').textContent = fm(maxPrice);
-          document.getElementById('lowestStore').textContent = 'at ' + datasets[lowestStoreIndex].label;
-          document.getElementById('highestStore').textContent = 'at ' + datasets[highestStoreIndex].label;
+          document.getElementById('lowestStore').textContent = 'at ' + lowestStore;
+          document.getElementById('highestStore').textContent = 'at ' + highestStore;
 
-          var ref = rows.reduce(function (s, r) { return s + Number(r.price); }, 0) / rows.length;
-          var spread = Math.max.apply(null, rows.map(function (r) { return Number(r.price); })) - Math.min.apply(null, rows.map(function (r) { return Number(r.price); }));
-          var pct = ref ? Math.round((spread / ref) * 100) : 0;
+          var firstVal = datasets[0] && datasets[0].data.length ? datasets[0].data[0] : avgPrice;
+          var lastVal = datasets[0] && datasets[0].data.length ? datasets[0].data[datasets[0].data.length - 1] : avgPrice;
+          var pct = firstVal ? Math.round(((lastVal - firstVal) / firstVal) * 100) : 0;
           var changeEl = document.getElementById('avgChange');
-          changeEl.textContent = 'Spread ~' + pct + '% across stores (live prices)';
-          changeEl.style.color = pct < 10 ? 'var(--primary)' : 'var(--red)';
+          changeEl.textContent = (pct >= 0 ? '+' : '') + pct + '% over selected period (live history)';
+          changeEl.style.color = pct <= 0 ? 'var(--primary)' : 'var(--red)';
 
           if (priceChart) {
             priceChart.data.labels = labels;
@@ -1346,7 +1344,7 @@
           }
         })
         .catch(function () {
-          document.getElementById('avgChange').textContent = 'Could not load store prices';
+          document.getElementById('avgChange').textContent = 'Could not load price history';
         });
     }
 
@@ -1428,7 +1426,9 @@
       }
       
       tbody.innerHTML = topProducts.slice(0, 5).map(function(product) {
-        var img = product.image ? ('../' + product.image) : 'https://via.placeholder.com/40';
+        var img = typeof productImageUrl === 'function'
+          ? productImageUrl(product.image, 'src/apple.jpg')
+          : (product.image ? ('../' + product.image) : 'https://via.placeholder.com/40');
         var st = product.status === 'active' ? 'active' : 'inactive';
         var stLabel = product.status === 'active' ? 'Active' : 'Inactive';
         return '<tr>' +
