@@ -833,15 +833,15 @@
 
             <div class="hero-stats">
               <div class="stat">
-                <h4>50K+</h4>
+                <h4 data-stat="products">—</h4>
                 <p>Products Tracked</p>
               </div>
               <div class="stat">
-                <h4>200+</h4>
+                <h4 data-stat="stores">—</h4>
                 <p>Stores Compared</p>
               </div>
               <div class="stat">
-                <h4>$2.5M</h4>
+                <h4 data-stat="savings">—</h4>
                 <p>User Savings</p>
               </div>
             </div>
@@ -1071,7 +1071,8 @@
     </div>
   </footer>
 
-  <script src="./js/api-base.js"></script>
+  <script src="../js/api-base.js"></script>
+  <script src="../js/public-stats.js"></script>
   <script>
     function syncHomeCategoryCounts() {
       var get = window.apiGetJson || function (path) {
@@ -1113,6 +1114,7 @@
     });
 
     syncHomeCategoryCounts();
+    loadPublicStats();
   </script>
 </body>
 </html>

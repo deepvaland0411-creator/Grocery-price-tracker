@@ -954,6 +954,7 @@
   </div>
 
   <script src="../js/api-base.js"></script>
+  <script src="../js/admin-nav.js"></script>
   <script>
     // ==========================================
     // SETTINGS SYNC - Apply settings from localStorage
@@ -1038,12 +1039,14 @@
         get('/admin/products?limit=500'),
         get('/admin/stores?limit=200'),
         get('/admin/summary'),
-        get('/admin/messages?limit=3')
+        get('/admin/messages?limit=3'),
+        get('/admin/activity')
       ]).then(function (results) {
         var pdata = results[0];
         var sdata = results[1];
         var summ = results[2];
         var mdata = results[3];
+        var adata = results[4];
         products = {};
         (pdata.items || []).forEach(function (p) {
           var ck = dashCatKey(p.category && p.category.name);
@@ -1078,6 +1081,15 @@
             status: m.status
           };
         });
+
+        activities = (adata.items || []).map(function (a) {
+          return {
+            type: a.type,
+            title: a.title,
+            time: a.time,
+            icon: a.icon || 'green'
+          };
+        });
       });
     }
 
@@ -1085,13 +1097,8 @@
 
     var messages = [];
 
-    // Recent Activity
-    var activities = [
-      { type: 'product', title: 'New product added: Almonds (1kg)', time: '2 hours ago', icon: 'green' },
-      { type: 'price', title: 'Price updated: Tomato at D-Mart - Rs. 40', time: '4 hours ago', icon: 'blue' },
-      { type: 'message', title: 'New message from Rahul Sharma', time: '6 hours ago', icon: 'yellow' },
-      { type: 'store', title: 'Store added: Heritage Fresh', time: '1 day ago', icon: 'green' }
-    ];
+    // Recent Activity (loaded from API)
+    var activities = [];
 
     var currentCategory = 'All';
     var priceChart = null;
@@ -1473,6 +1480,10 @@
     // Render Activity List
     function renderActivityList() {
       var list = document.getElementById('activityList');
+      if (!activities.length) {
+        list.innerHTML = '<div class="activity-item"><div class="activity-content"><div class="activity-title" style="color:var(--muted-foreground);">No recent activity yet.</div></div></div>';
+        return;
+      }
       list.innerHTML = activities.map(function(activity) {
         var iconSvg = activity.type === 'product' ? 
           '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>' : 
@@ -1512,6 +1523,7 @@
           createCategoryChart();
           renderTopProducts();
           renderRecentMessages();
+          renderActivityList();
         });
     }
 

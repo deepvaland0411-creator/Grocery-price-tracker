@@ -730,7 +730,7 @@
                 </svg>
               </div>
             </div>
-            <div class="stat-card-value">53</div>
+            <div class="stat-card-value" id="totalCategoryProducts">—</div>
             <div class="stat-card-change">Across all categories</div>
           </div>
           <div class="stat-card">
@@ -742,7 +742,7 @@
                 </svg>
               </div>
             </div>
-            <div class="stat-card-value">7.6</div>
+            <div class="stat-card-value" id="avgProductsPerCategory">—</div>
             <div class="stat-card-change">Products per category</div>
           </div>
         </div>
@@ -852,6 +852,7 @@
   </div>
 
   <script src="../js/api-base.js"></script>
+  <script src="../js/admin-nav.js"></script>
   <script>
     // ==========================================
     // SETTINGS SYNC - Apply settings from localStorage
@@ -980,6 +981,12 @@
       // Update stats
       document.getElementById('totalCategories').textContent = categories.length;
       document.getElementById('activeCategories').textContent = categories.filter(function(c) { return c.status === 'active'; }).length;
+      var totalProducts = categories.reduce(function(sum, c) { return sum + (c.products || 0); }, 0);
+      var avgProducts = categories.length ? (totalProducts / categories.length).toFixed(1) : '0';
+      var totalProductsEl = document.getElementById('totalCategoryProducts');
+      var avgProductsEl = document.getElementById('avgProductsPerCategory');
+      if (totalProductsEl) totalProductsEl.textContent = totalProducts;
+      if (avgProductsEl) avgProductsEl.textContent = avgProducts;
     }
 
     function formatDate(dateStr) {

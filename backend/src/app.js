@@ -8,23 +8,26 @@ const publicRoutes = require("./routes/public.routes");
 
 const app = express();
 
-// Allowed Frontend Origins
 const allowedOrigins = [
+  config.corsOrigin,
   "http://localhost:5500",
   "http://127.0.0.1:5500",
-  "https://grocery-price-tracker-coral.vercel.app"
-];
+  "https://grocery-price-tracker-coral.vercel.app",
+].filter(Boolean);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
+  return false;
+}
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests without origin (Postman, Render health checks, etc.)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
-
       return callback(new Error("CORS not allowed"));
     },
     credentials: true,

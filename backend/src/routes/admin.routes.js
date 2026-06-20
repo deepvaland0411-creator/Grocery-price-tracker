@@ -257,6 +257,83 @@ router.get("/summary", async (_req, res, next) => {
   }
 });
 
+function relativeTime(date) {
+  const ms = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+router.get("/activity", async (_req, res, next) => {
+  try {
+    const [products, stores, messages, prices] = await Promise.all([
+      Product.find().sort({ createdAt: -1 }).limit(5).select("name createdAt").lean(),
+      Store.find().sort({ createdAt: -1 }).limit(5).select("name createdAt").lean(),
+      ContactMessage.find().sort({ createdAt: -1 }).limit(5).lean(),
+      ProductStorePrice.find()
+        .sort({ updatedAt: -1 })
+        .limit(5)
+        .populate("product", "name")
+        .populate("store", "name")
+        .lean(),
+    ]);
+
+    const items = [];
+
+    products.forEach((p) => {
+      items.push({
+        type: "product",
+        icon: "green",
+        title: `Product added: ${p.name}`,
+        time: relativeTime(p.createdAt),
+        at: p.createdAt,
+      });
+    });
+
+    stores.forEach((s) => {
+      items.push({
+        type: "store",
+        icon: "green",
+        title: `Store added: ${s.name}`,
+        time: relativeTime(s.createdAt),
+        at: s.createdAt,
+      });
+    });
+
+    messages.forEach((m) => {
+      items.push({
+        type: "message",
+        icon: "yellow",
+        title: `Message from ${m.firstName} ${m.lastName}`.trim(),
+        time: relativeTime(m.createdAt),
+        at: m.createdAt,
+      });
+    });
+
+    prices.forEach((row) => {
+      if (!row.product || !row.store) return;
+      items.push({
+        type: "price",
+        icon: "blue",
+        title: `Price updated: ${row.product.name} at ${row.store.name} — Rs. ${row.price}`,
+        time: relativeTime(row.updatedAt),
+        at: row.updatedAt,
+      });
+    });
+
+    items.sort((a, b) => new Date(b.at) - new Date(a.at));
+
+    res.json({ items: items.slice(0, 8) });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get("/categories", async (req, res, next) => {
   try {
     const { status, search } = req.query;

@@ -634,19 +634,19 @@
       <div class="container">
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-number">50K+</div>
+            <div class="stat-number" data-stat="products">—</div>
             <div class="stat-label">Products Tracked</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">200+</div>
+            <div class="stat-number" data-stat="stores">—</div>
             <div class="stat-label">Stores Monitored</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">$2.5M</div>
+            <div class="stat-number" data-stat="savings">—</div>
             <div class="stat-label">User Savings</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">15K+</div>
+            <div class="stat-number" data-stat="users">—</div>
             <div class="stat-label">Happy Users</div>
           </div>
         </div>
@@ -926,6 +926,8 @@
     </div>
   </footer>
 
+  <script src="../js/api-base.js"></script>
+  <script src="../js/public-stats.js"></script>
   <script>
     function toggleMobileMenu() {
       document.getElementById('mobileNav').classList.toggle('open');
@@ -939,6 +941,8 @@
       const buttons = document.querySelectorAll('.header-actions a');
       buttons.forEach(el => el.style.display = window.innerWidth >= 768 ? 'inline-flex' : 'none');
     });
+
+    loadPublicStats();
   </script>
 </body>
 </html>

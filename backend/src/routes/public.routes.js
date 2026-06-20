@@ -6,10 +6,20 @@ const ProductStorePrice = require("../models/productStorePrice.model");
 const PriceHistory = require("../models/priceHistory.model");
 const ContactMessage = require("../models/contactMessage.model");
 const { daysAgo } = require("../priceHistoryUtil");
+const { computePlatformStats } = require("../statsService");
 
 const router = express.Router();
 
 const SUBJECT_KEYS = new Set(["general", "support", "feedback", "partnership", "other"]);
+
+router.get("/stats", async (_req, res, next) => {
+  try {
+    const stats = await computePlatformStats();
+    res.json(stats);
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.post("/contact-messages", async (req, res, next) => {
   try {
