@@ -3,6 +3,64 @@
     {
       "source": "/",
       "destination": "/user/index.html"
+    },
+
+    {
+      "source": "/index.html",
+      "destination": "/user/index.html"
+    },
+    {
+      "source": "/about.html",
+      "destination": "/user/about.html"
+    },
+    {
+      "source": "/budget.html",
+      "destination": "/user/budget.html"
+    },
+    {
+      "source": "/contact.html",
+      "destination": "/user/contact.html"
+    },
+    {
+      "source": "/login.html",
+      "destination": "/user/login.html"
+    },
+    {
+      "source": "/stores.html",
+      "destination": "/user/stores.html"
+    },
+    {
+      "source": "/trends.html",
+      "destination": "/user/trends.html"
+    },
+
+    {
+      "source": "/admin/categories.html",
+      "destination": "/admin/categories.html"
+    },
+    {
+      "source": "/admin/dashboard.html",
+      "destination": "/admin/dashboard.html"
+    },
+    {
+      "source": "/admin/messages.html",
+      "destination": "/admin/messages.html"
+    },
+    {
+      "source": "/admin/prices.html",
+      "destination": "/admin/prices.html"
+    },
+    {
+      "source": "/admin/products.html",
+      "destination": "/admin/products.html"
+    },
+    {
+      "source": "/admin/settings.html",
+      "destination": "/admin/settings.html"
+    },
+    {
+      "source": "/admin/stores.html",
+      "destination": "/admin/stores.html"
     }
   ]
 }
